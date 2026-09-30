@@ -21,9 +21,10 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/simulador")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    q: typeof search.q === "string" ? search.q : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { q?: string } => {
+    const q = search["q"];
+    return typeof q === "string" ? { q } : {};
+  },
   head: () => ({
     meta: [
       { title: "Simulador de Decisões — NEXORA" },
@@ -249,7 +250,7 @@ function SimulatorPage() {
                   >
                     <p className="text-sm text-muted-foreground">{impact.label}</p>
                     <p className="mt-2 font-display text-2xl font-semibold">{impact.value}</p>
-                    <Pill tone={impactToneMap[impact.tone]} className="mt-3">
+                    <Pill tone={impactToneMap[impact.tone] ?? "muted"} className="mt-3">
                       {impact.tone === "success"
                         ? "Ganho"
                         : impact.tone === "warning"

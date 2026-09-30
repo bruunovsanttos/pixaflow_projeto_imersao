@@ -146,7 +146,7 @@ function Dashboard() {
             </p>
           </div>
           <Button asChild size="lg" className="shadow-[var(--shadow-glow)]">
-            <Link to="/simulador">
+            <Link to="/simulador" search={{}}>
               <Sparkles className="size-4" />
               Simular uma decisão
             </Link>

@@ -61,7 +61,7 @@ function Brand() {
   );
 }
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
+function NavList({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -105,13 +105,15 @@ function SidebarFooterCard() {
         A Nexora está analisando 14 sinais da sua operação em tempo real.
       </p>
       <Button asChild variant="secondary" size="sm" className="mt-3 w-full">
-        <Link to="/simulador">Simular uma decisão</Link>
+        <Link to="/simulador" search={{}}>
+          Simular uma decisão
+        </Link>
       </Button>
     </div>
   );
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
   return (
     <div className="flex h-full flex-col gap-6 bg-sidebar p-5">
       <Brand />
@@ -127,7 +129,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function CompanySwitcher() {
-  const [company, setCompany] = useState(companies[0]);
+  const [company, setCompany] = useState(companies[0]!);
 
   return (
     <DropdownMenu>

@@ -68,7 +68,7 @@ function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="company">Empresa ativa</Label>
-                <Select defaultValue={companies[0].id}>
+                <Select defaultValue={companies[0]!.id}>
                   <SelectTrigger id="company">
                     <SelectValue />
                   </SelectTrigger>
