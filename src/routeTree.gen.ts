@@ -10,12 +10,20 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as LinhaDoTempoRouteImport } from './routes/linha-do-tempo'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as OportunidadesRouteImport } from './routes/oportunidades'
+import { Route as RiscosRouteImport } from './routes/riscos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LinhaDoTempoRoute = LinhaDoTempoRouteImport.update({
@@ -28,35 +36,76 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OportunidadesRoute = OportunidadesRouteImport.update({
+  id: '/oportunidades',
+  path: '/oportunidades',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RiscosRoute = RiscosRouteImport.update({
+  id: '/riscos',
+  path: '/riscos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
+  '/oportunidades': typeof OportunidadesRoute
+  '/riscos': typeof RiscosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
+  '/oportunidades': typeof OportunidadesRoute
+  '/riscos': typeof RiscosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
+  '/oportunidades': typeof OportunidadesRoute
+  '/riscos': typeof RiscosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/linha-do-tempo' | '/login'
+  fullPaths:
+    | '/'
+    | '/configuracoes'
+    | '/linha-do-tempo'
+    | '/login'
+    | '/oportunidades'
+    | '/riscos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/linha-do-tempo' | '/login'
-  id: '__root__' | '/' | '/linha-do-tempo' | '/login'
+  to:
+    | '/'
+    | '/configuracoes'
+    | '/linha-do-tempo'
+    | '/login'
+    | '/oportunidades'
+    | '/riscos'
+  id:
+    | '__root__'
+    | '/'
+    | '/configuracoes'
+    | '/linha-do-tempo'
+    | '/login'
+    | '/oportunidades'
+    | '/riscos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
   LinhaDoTempoRoute: typeof LinhaDoTempoRoute
   LoginRoute: typeof LoginRoute
+  OportunidadesRoute: typeof OportunidadesRoute
+  RiscosRoute: typeof RiscosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -66,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/linha-do-tempo': {
@@ -82,13 +138,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/oportunidades': {
+      id: '/oportunidades'
+      path: '/oportunidades'
+      fullPath: '/oportunidades'
+      preLoaderRoute: typeof OportunidadesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/riscos': {
+      id: '/riscos'
+      path: '/riscos'
+      fullPath: '/riscos'
+      preLoaderRoute: typeof RiscosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
   LinhaDoTempoRoute: LinhaDoTempoRoute,
   LoginRoute: LoginRoute,
+  OportunidadesRoute: OportunidadesRoute,
+  RiscosRoute: RiscosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
