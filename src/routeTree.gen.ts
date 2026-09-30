@@ -10,15 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AssistenteRouteImport } from './routes/assistente'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as LinhaDoTempoRouteImport } from './routes/linha-do-tempo'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OportunidadesRouteImport } from './routes/oportunidades'
 import { Route as RiscosRouteImport } from './routes/riscos'
+import { Route as SimuladorRouteImport } from './routes/simulador'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AssistenteRoute = AssistenteRouteImport.update({
+  id: '/assistente',
+  path: '/assistente',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
@@ -46,66 +53,85 @@ const RiscosRoute = RiscosRouteImport.update({
   path: '/riscos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SimuladorRoute = SimuladorRouteImport.update({
+  id: '/simulador',
+  path: '/simulador',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
   '/oportunidades': typeof OportunidadesRoute
   '/riscos': typeof RiscosRoute
+  '/simulador': typeof SimuladorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
   '/oportunidades': typeof OportunidadesRoute
   '/riscos': typeof RiscosRoute
+  '/simulador': typeof SimuladorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
   '/oportunidades': typeof OportunidadesRoute
   '/riscos': typeof RiscosRoute
+  '/simulador': typeof SimuladorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/assistente'
     | '/configuracoes'
     | '/linha-do-tempo'
     | '/login'
     | '/oportunidades'
     | '/riscos'
+    | '/simulador'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/assistente'
     | '/configuracoes'
     | '/linha-do-tempo'
     | '/login'
     | '/oportunidades'
     | '/riscos'
+    | '/simulador'
   id:
     | '__root__'
     | '/'
+    | '/assistente'
     | '/configuracoes'
     | '/linha-do-tempo'
     | '/login'
     | '/oportunidades'
     | '/riscos'
+    | '/simulador'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AssistenteRoute: typeof AssistenteRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   LinhaDoTempoRoute: typeof LinhaDoTempoRoute
   LoginRoute: typeof LoginRoute
   OportunidadesRoute: typeof OportunidadesRoute
   RiscosRoute: typeof RiscosRoute
+  SimuladorRoute: typeof SimuladorRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -115,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/assistente': {
+      id: '/assistente'
+      path: '/assistente'
+      fullPath: '/assistente'
+      preLoaderRoute: typeof AssistenteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/configuracoes': {
@@ -152,16 +185,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RiscosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/simulador': {
+      id: '/simulador'
+      path: '/simulador'
+      fullPath: '/simulador'
+      preLoaderRoute: typeof SimuladorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AssistenteRoute: AssistenteRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   LinhaDoTempoRoute: LinhaDoTempoRoute,
   LoginRoute: LoginRoute,
   OportunidadesRoute: OportunidadesRoute,
   RiscosRoute: RiscosRoute,
+  SimuladorRoute: SimuladorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
