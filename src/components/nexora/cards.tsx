@@ -21,7 +21,7 @@ export function StatCard({ kpi }: { kpi: KpiCard }) {
   const Icon = trendIcon[kpi.trend];
   return (
     <div className="card-hover rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-card)]">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="text-sm font-medium text-muted-foreground">{kpi.label}</p>
         <Pill tone={kpi.tone}>
           <Icon className="size-3.5" />
@@ -191,7 +191,9 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
         </div>
         <div>
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">ROI</p>
-          <p className="font-display text-base font-semibold">{opportunity.roi}%</p>
+          <p className="font-display text-base font-semibold">
+            {opportunity.roi === null ? "Não aplicável" : `${opportunity.roi}%`}
+          </p>
         </div>
         <div>
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Prazo</p>
@@ -199,13 +201,15 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
         </div>
       </div>
 
-      <div className="mt-5 flex items-center gap-2 pt-1">
+      <div className="mt-5 flex flex-wrap items-center gap-2 pt-1">
         <Button size="sm" asChild>
           <Link to="/simulador" search={{ q: opportunity.action }}>
             Simular oportunidade
           </Link>
         </Button>
-        <Pill tone={effortTone[opportunity.effort]}>Esforço {opportunity.effort.toLowerCase()}</Pill>
+        <Pill tone={effortTone[opportunity.effort]}>
+          Esforço {opportunity.effort.toLowerCase()}
+        </Pill>
         {opportunity.extraClients > 0 ? (
           <span className="ml-auto text-xs text-muted-foreground">
             +{opportunity.extraClients} clientes

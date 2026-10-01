@@ -194,7 +194,7 @@ function Dashboard() {
         <div className="mt-4">
           <Panel
             title="Riscos que exigem atenção"
-            description="Ordenados por probabilidade e impacto financeiro."
+            description="Três riscos críticos que merecem acompanhamento."
             actions={
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/riscos">Ver todos</Link>

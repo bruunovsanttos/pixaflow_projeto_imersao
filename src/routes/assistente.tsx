@@ -124,7 +124,7 @@ function AssistantPage() {
             {messages.map((m) =>
               m.role === "user" ? (
                 <div key={m.id} className="flex justify-end gap-3">
-                  <div className="max-w-[80%] rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground">
+                  <div className="max-w-[80%] break-words rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground">
                     {m.text}
                   </div>
                   <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-semibold">
@@ -136,7 +136,7 @@ function AssistantPage() {
                   <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-[image:var(--gradient-brand)]">
                     <Sparkles className="size-4 text-primary-foreground" />
                   </span>
-                  <div className="w-full rounded-2xl rounded-bl-sm bg-muted/60 p-4">
+                  <div className="min-w-0 w-full rounded-2xl rounded-bl-sm bg-muted/60 p-4">
                     {m.answer ? <AnswerBlock answer={m.answer} /> : m.text}
                   </div>
                 </div>
@@ -149,7 +149,7 @@ function AssistantPage() {
                   <Sparkles className="size-4 text-primary-foreground" />
                 </span>
                 <Loader2 className="size-4 animate-spin" />
-                Analisando 14 sinais da sua operação...
+                Preparando resposta demonstrativa...
               </div>
             ) : null}
           </div>
@@ -176,6 +176,8 @@ function AssistantPage() {
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                aria-label="Pergunta ao assistente"
+                maxLength={2000}
                 placeholder="Pergunte algo sobre a sua operação..."
                 className="h-11"
               />

@@ -107,9 +107,9 @@ function LoginPage() {
             <span className="font-display text-xl font-semibold tracking-tight">NEXORA</span>
           </div>
 
-          <h1 className="mt-10 text-3xl font-semibold">Entrar na Nexora</h1>
+          <h1 className="mt-10 text-3xl font-semibold">Experimentar a Nexora</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Acompanhe riscos, oportunidades e simulações da sua operação.
+            Acesso demonstrativo. Os campos são fictícios; nenhuma conta ou autenticação é criada.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -137,14 +137,14 @@ function LoginPage() {
             </div>
             <Button type="submit" size="lg" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="size-4 animate-spin" /> : null}
-              {loading ? "Analisando sua operação..." : "Entrar"}
+              {loading ? "Abrindo demonstração..." : "Entrar na demonstração"}
             </Button>
           </form>
 
           <p className="mt-6 text-sm text-muted-foreground">
-            Novo na Nexora?{" "}
-            <Link to="/" className="font-semibold text-primary hover:underline">
-              Criar conta
+            Quer conhecer o produto?{" "}
+            <Link to="/apresentacao" className="font-semibold text-primary hover:underline">
+              Ver apresentação
             </Link>
           </p>
         </div>

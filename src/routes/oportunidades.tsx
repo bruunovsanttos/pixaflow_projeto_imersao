@@ -44,11 +44,11 @@ function OpportunitiesPage() {
         <PageHeader
           eyebrow="Oportunidades"
           title="Oportunidades"
-          description="A Nexora encontrou oportunidades que podem estar passando despercebidas."
+          description="Potenciais ilustrativos em diferentes prazos. Não some os valores: as ações podem se sobrepor."
           actions={
             <div className="flex gap-2">
               <Pill tone="insight">{opportunities.length} detectadas</Pill>
-              <Pill tone="success">Potencial +{currency(total)}</Pill>
+              <Pill tone="success">Potenciais por ação</Pill>
             </div>
           }
         />

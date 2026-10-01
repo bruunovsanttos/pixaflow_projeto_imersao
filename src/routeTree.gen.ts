@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApresentacaoRouteImport } from './routes/apresentacao'
 import { Route as AssistenteRouteImport } from './routes/assistente'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as LinhaDoTempoRouteImport } from './routes/linha-do-tempo'
@@ -21,6 +22,11 @@ import { Route as SimuladorRouteImport } from './routes/simulador'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApresentacaoRoute = ApresentacaoRouteImport.update({
+  id: '/apresentacao',
+  path: '/apresentacao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AssistenteRoute = AssistenteRouteImport.update({
@@ -61,6 +67,7 @@ const SimuladorRoute = SimuladorRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/apresentacao': typeof ApresentacaoRoute
   '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/apresentacao': typeof ApresentacaoRoute
   '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
@@ -82,6 +90,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/apresentacao': typeof ApresentacaoRoute
   '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/apresentacao'
     | '/assistente'
     | '/configuracoes'
     | '/linha-do-tempo'
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/apresentacao'
     | '/assistente'
     | '/configuracoes'
     | '/linha-do-tempo'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/apresentacao'
     | '/assistente'
     | '/configuracoes'
     | '/linha-do-tempo'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApresentacaoRoute: typeof ApresentacaoRoute
   AssistenteRoute: typeof AssistenteRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
   LinhaDoTempoRoute: typeof LinhaDoTempoRoute
@@ -141,6 +154,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/apresentacao': {
+      id: '/apresentacao'
+      path: '/apresentacao'
+      fullPath: '/apresentacao'
+      preLoaderRoute: typeof ApresentacaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/assistente': {
@@ -197,6 +217,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApresentacaoRoute: ApresentacaoRoute,
   AssistenteRoute: AssistenteRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
   LinhaDoTempoRoute: LinhaDoTempoRoute,

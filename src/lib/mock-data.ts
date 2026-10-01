@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { readDemo, writeDemo } from "./demo-storage";
+
 /**
  * Camada de dados mockados da Nexora.
  *
@@ -58,7 +61,7 @@ export interface Opportunity {
   action: string;
   potentialRevenue: number;
   cost: number;
-  roi: number;
+  roi: number | null;
   extraClients: number;
   effort: "Baixo" | "Médio" | "Alto";
   horizon: string;
@@ -92,8 +95,6 @@ export const currency = (value: number) =>
 
 export const companies: Company[] = [
   { id: "bellastudio", name: "Bella Studio", segment: "Beleza & Estética" },
-  { id: "nordlog", name: "NordLog Distribuição", segment: "Logística" },
-  { id: "casaverde", name: "Casa Verde Alimentos", segment: "Varejo" },
 ];
 
 export const currentUser = {
@@ -104,7 +105,7 @@ export const currentUser = {
 };
 
 export const operationalHealth = {
-  score: 84,
+  score: 86,
   delta: 4,
   label: "Saúde Operacional",
 };
@@ -130,7 +131,7 @@ export const kpis: KpiCard[] = [
     id: "opps",
     label: "Oportunidades",
     value: "5 oportunidades",
-    hint: "+R$ 9.140 em potencial",
+    hint: "Potenciais em horizontes de 15 a 90 dias",
     trend: "up",
     tone: "insight",
   },
@@ -205,8 +206,7 @@ export const risks: Risk[] = [
     title: "Pressão no fluxo de caixa",
     category: "Financeiro",
     description: "Projeção: -12%",
-    detail:
-      "Concentração de pagamentos a fornecedores na mesma semana em que os recebíveis caem.",
+    detail: "Concentração de pagamentos a fornecedores na mesma semana em que os recebíveis caem.",
     probability: 64,
     impact: 6100,
     deadline: "próxima semana",
@@ -312,7 +312,7 @@ export const opportunities: Opportunity[] = [
     action: "Renegociar tabela e consolidar pedidos mensais.",
     potentialRevenue: 1480,
     cost: 0,
-    roi: 100,
+    roi: null,
     extraClients: 0,
     effort: "Baixo",
     horizon: "15 dias",
@@ -361,7 +361,7 @@ export const timeline: TimelineEvent[] = [
     severity: "critico",
     description: "Probabilidade de 91% de zerar o item antes da entrega do fornecedor.",
     cause: "Lead time de 6 dias maior que a cobertura atual de 3 dias.",
-    impact: "Perda estimada de R$ 1.840 em vendas.",
+    impact: "Perda estimada de R$ 8.420 em vendas.",
     recommendations: ["Acionar fornecedor alternativo", "Substituir item em promoções"],
   },
   {
@@ -464,7 +464,7 @@ export interface AssistantAnswer {
 
 export const assistantAnswers: Record<string, AssistantAnswer> = {
   "O que devo acompanhar essa semana?": {
-    text: "Três frentes concentram 82% do impacto previsto para os próximos 7 dias.",
+    text: "Estes são os três riscos críticos da empresa demonstrada.",
     cards: [
       {
         title: "Saúde operacional",
@@ -472,8 +472,18 @@ export const assistantAnswers: Record<string, AssistantAnswer> = {
         hint: "queda prevista em 7 dias",
         tone: "warning",
       },
-      { title: "Impacto em risco", value: currency(18820), hint: "soma dos 3 riscos críticos", tone: "danger" },
-      { title: "Ganho disponível", value: currency(7400), hint: "2 oportunidades rápidas", tone: "insight" },
+      {
+        title: "Impacto em risco",
+        value: currency(18820),
+        hint: "soma dos 3 riscos críticos",
+        tone: "danger",
+      },
+      {
+        title: "Ganho disponível",
+        value: currency(7400),
+        hint: "ações em 21 e 30 dias; podem se sobrepor",
+        tone: "insight",
+      },
     ],
     bullets: [
       "Reposição do Shampoo Professional 500ml até quinta-feira",
@@ -511,8 +521,18 @@ export const assistantAnswers: Record<string, AssistantAnswer> = {
     text: "Três vazamentos somam aproximadamente R$ 6.900 por mês.",
     cards: [
       { title: "Ociosidade", value: currency(3280), hint: "terças, 14h-17h", tone: "insight" },
-      { title: "Clientes parados", value: currency(2140), hint: "128 sem retorno", tone: "warning" },
-      { title: "Inadimplência", value: currency(1480), hint: "8 parcelas em atraso", tone: "danger" },
+      {
+        title: "Clientes parados",
+        value: currency(2140),
+        hint: "128 sem retorno",
+        tone: "warning",
+      },
+      {
+        title: "Inadimplência",
+        value: currency(1480),
+        hint: "8 parcelas em atraso",
+        tone: "danger",
+      },
     ],
     bullets: [
       "A ociosidade é o vazamento mais barato de corrigir",
@@ -523,11 +543,11 @@ export const assistantAnswers: Record<string, AssistantAnswer> = {
 };
 
 export const defaultAssistantAnswer: AssistantAnswer = {
-  text: "Analisei os dados da operação e reuni os indicadores mais relevantes para essa pergunta.",
+  text: "Esta pergunta ainda não tem uma resposta específica na demonstração. Abaixo está um resumo geral; experimente uma das perguntas sugeridas.",
   cards: [
-    { title: "Saúde operacional", value: "84 / 100", hint: "+4 pontos na semana", tone: "primary" },
+    { title: "Saúde operacional", value: "86 / 100", hint: "+4 pontos na semana", tone: "primary" },
     { title: "Riscos ativos", value: "3 críticos", hint: "impacto de R$ 18.820", tone: "danger" },
-    { title: "Oportunidades", value: "5 abertas", hint: "potencial de R$ 17.040", tone: "insight" },
+    { title: "Oportunidades", value: "5 abertas", hint: "prazos de 15 a 90 dias", tone: "insight" },
   ],
   bullets: [
     "Priorize o risco de estoque com janela de 48h",
@@ -535,3 +555,278 @@ export const defaultAssistantAnswer: AssistantAnswer = {
     "Simule a decisão antes de aplicar para ver o impacto na capacidade",
   ],
 };
+
+export const notifications = [
+  { title: risks[0]!.title, hint: risks[0]!.description, tone: "danger", to: "/riscos" },
+  { title: risks[1]!.title, hint: risks[1]!.description, tone: "warning", to: "/linha-do-tempo" },
+  {
+    title: opportunities[0]!.title,
+    hint: opportunities[0]!.action,
+    tone: "insight",
+    to: "/oportunidades",
+  },
+] as const;
+
+export const decisionOptions = [
+  {
+    id: "marketing",
+    label: "Aumentar marketing",
+    unit: "%",
+    min: 0,
+    max: 100,
+    initial: 30,
+    assumption: "Cada 1% a mais em marketing gera 0,93% de demanda adicional nesta demonstração.",
+  },
+  {
+    id: "stock",
+    label: "Repor estoque",
+    unit: "unidades",
+    min: 0,
+    max: 100,
+    initial: 40,
+    assumption:
+      "Cada unidade custa R$ 46. Reposição de 40 unidades recupera até R$ 8.420 em vendas no mês.",
+  },
+  {
+    id: "hire",
+    label: "Contratar equipe",
+    unit: "pessoas",
+    min: 0,
+    max: 5,
+    initial: 1,
+    assumption:
+      "Cada pessoa custa R$ 3.200 por mês e amplia a capacidade disponível em 22%. Demanda constante.",
+  },
+  {
+    id: "price",
+    label: "Reduzir preço",
+    unit: "%",
+    min: 0,
+    max: 30,
+    initial: 10,
+    assumption: "Cada 1% de desconto aumenta a demanda em 1,5%. A receita considera o novo preço.",
+  },
+  {
+    id: "unit",
+    label: "Abrir nova unidade",
+    unit: "unidades",
+    min: 0,
+    max: 3,
+    initial: 1,
+    assumption:
+      "Cada unidade custa R$ 60 mil na abertura, R$ 12 mil por mês e acrescenta 60% de demanda e 100% de capacidade.",
+  },
+  {
+    id: "opportunity",
+    label: "Aplicar oportunidade",
+    unit: "% da ação",
+    min: 0,
+    max: 100,
+    initial: 100,
+    assumption:
+      "Escala proporcional dos custos e ganhos do card selecionado. Hipótese ilustrativa, sem previsão estatística.",
+  },
+] as const;
+export type DecisionKind = (typeof decisionOptions)[number]["id"];
+export interface SimulationInput {
+  kind: DecisionKind;
+  amount: number;
+  question: string;
+  opportunityId?: string;
+}
+export interface SimulationResult {
+  input: SimulationInput;
+  baseline: ScenarioMetrics;
+  simulated: ScenarioMetrics;
+  additionalCost: number;
+  initialCapital: number;
+  incrementalBalance: number;
+  horizon: string;
+  assumption: string;
+  recommendations: string[];
+}
+
+export function suggestDecision(question: string): DecisionKind {
+  const q = question
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (/ocios|campanha|reativ|combinad|renegociar tabela|plano mensal/.test(q)) return "opportunity";
+  if (/estoque|shampoo|reposi|fornecedor/.test(q)) return "stock";
+  if (/contrat|funcionario|equipe|capacidade|ferias|sobrecarga/.test(q)) return "hire";
+  if (/preco|desconto/.test(q)) return "price";
+  if (/unidade/.test(q)) return "unit";
+  return "marketing";
+}
+
+// Pure, deterministic demo rules. The form confirms the variables; text is not interpreted by AI.
+export function calculateSimulation(input: SimulationInput): SimulationResult {
+  const option = decisionOptions.find((item) => item.id === input.kind);
+  if (
+    !option ||
+    !Number.isFinite(input.amount) ||
+    !Number.isInteger(input.amount) ||
+    input.amount < option.min ||
+    input.amount > option.max
+  ) {
+    throw new Error("Revise o valor da decisão antes de simular.");
+  }
+  const opportunity =
+    input.kind === "opportunity"
+      ? opportunities.find((item) => item.id === input.opportunityId)
+      : undefined;
+  if (input.kind === "opportunity" && !opportunity)
+    throw new Error("Selecione uma oportunidade válida.");
+  const period = opportunity ? Number.parseInt(opportunity.horizon, 10) / 30 : 1;
+  const baseline = {
+    ...baseScenario,
+    investment: Math.round(baseScenario.investment * period),
+    clients: Math.round(baseScenario.clients * period),
+    revenue: Math.round(baseScenario.revenue * period),
+  };
+  let clients = baseline.clients,
+    revenue = baseline.revenue,
+    capacity = baseline.capacity;
+  let additionalCost = 0,
+    initialCapital = 0;
+  let horizon = "30 dias";
+  const amount = input.amount;
+  if (input.kind === "marketing") {
+    additionalCost = (baseline.investment * amount) / 100;
+    clients *= 1 + amount * 0.0093;
+    revenue *= clients / baseline.clients;
+    capacity *= clients / baseline.clients;
+  } else if (input.kind === "stock") {
+    additionalCost = amount * 46;
+    revenue += risks[0]!.impact * Math.min(amount / 40, 1);
+  } else if (input.kind === "hire") {
+    additionalCost = amount * 3200;
+    capacity /= 1 + amount * 0.22;
+  } else if (input.kind === "price") {
+    clients *= 1 + amount * 0.015;
+    revenue *= (clients / baseline.clients) * (1 - amount / 100);
+    capacity *= clients / baseline.clients;
+  } else if (input.kind === "unit") {
+    initialCapital = amount * 60000;
+    additionalCost = amount * 12000;
+    clients *= 1 + amount * 0.6;
+    revenue *= clients / baseline.clients;
+    capacity *= (1 + amount * 0.6) / (1 + amount);
+  } else {
+    if (!opportunity) throw new Error("Selecione uma oportunidade válida.");
+    const factor = amount / 100;
+    additionalCost = opportunity.cost * factor;
+    revenue += opportunity.potentialRevenue * factor;
+    clients += opportunity.extraClients * factor;
+    capacity *= clients / baseline.clients;
+    horizon = opportunity.horizon;
+  }
+  const simulated = {
+    investment: Math.round(baseline.investment + additionalCost),
+    clients: Math.round(clients),
+    revenue: Math.round(revenue),
+    capacity: Math.round(capacity),
+  };
+  return {
+    input: { ...input },
+    baseline,
+    simulated,
+    additionalCost: Math.round(additionalCost),
+    initialCapital,
+    incrementalBalance: Math.round(revenue - baseline.revenue - additionalCost),
+    horizon,
+    assumption: option.assumption,
+    recommendations:
+      simulated.capacity > 100
+        ? [
+            "Redistribuir demanda antes de executar a ação.",
+            "Comparar com contratação de equipe para reduzir a ocupação.",
+          ]
+        : [
+            "Validar custos e demanda com os dados reais da empresa.",
+            "Acompanhar os resultados antes de ampliar a ação.",
+          ],
+  };
+}
+
+// POST /simulacoes: async boundary ready for a future HTTP adapter.
+export async function simulateDecision(input: SimulationInput): Promise<SimulationResult> {
+  await new Promise((resolve) => setTimeout(resolve, 450));
+  return calculateSimulation(input);
+}
+
+const inputSchema = z.object({
+  kind: z.enum(["marketing", "stock", "hire", "price", "unit", "opportunity"]),
+  amount: z.number().finite(),
+  question: z.string().max(2000),
+  opportunityId: z.string().optional(),
+});
+const savedSchema = z
+  .array(z.object({ id: z.string(), createdAt: z.string(), input: inputSchema }))
+  .max(20);
+export type SavedScenario = { id: string; createdAt: string; input: SimulationInput };
+const scenarioKey = "nexora.scenarios.v1";
+export async function listScenarios(): Promise<SavedScenario[]> {
+  const items = readDemo(scenarioKey, savedSchema, []);
+  return items.map((item) => {
+    const input: SimulationInput = {
+      kind: item.input.kind,
+      amount: item.input.amount,
+      question: item.input.question,
+    };
+    if (item.input.opportunityId) input.opportunityId = item.input.opportunityId;
+    calculateSimulation(input);
+    return { ...item, input };
+  });
+}
+export async function saveScenario(input: SimulationInput): Promise<SavedScenario[]> {
+  calculateSimulation(input);
+  const items = await listScenarios();
+  if (items.length >= 20) throw new Error("Limite de 20 cenários. Remova um antes de salvar.");
+  const next = [{ id: crypto.randomUUID(), createdAt: new Date().toISOString(), input }, ...items];
+  writeDemo(scenarioKey, next);
+  return next;
+}
+export async function deleteScenario(id: string): Promise<SavedScenario[]> {
+  const next = (await listScenarios()).filter((item) => item.id !== id);
+  writeDemo(scenarioKey, next);
+  return next;
+}
+
+export const settingsSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  email: z.string().email(),
+  role: z.string().trim().min(1).max(80),
+  alerts: z.object({
+    risks: z.boolean(),
+    opps: z.boolean(),
+    weekly: z.boolean(),
+    capacity: z.boolean(),
+  }),
+  horizon: z.enum(["7", "15", "30"]),
+  sensitivity: z.enum(["conservadora", "equilibrada", "agressiva"]),
+});
+export type DemoSettings = z.infer<typeof settingsSchema>;
+export const defaultSettings: DemoSettings = {
+  name: currentUser.name,
+  email: currentUser.email,
+  role: currentUser.role,
+  alerts: { risks: true, opps: true, weekly: true, capacity: false },
+  horizon: "7",
+  sensitivity: "equilibrada",
+};
+export const alertOptions = [
+  { id: "risks", label: "Alertas de risco crítico" },
+  { id: "opps", label: "Novas oportunidades" },
+  { id: "weekly", label: "Relatório semanal" },
+  { id: "capacity", label: "Capacidade acima de 95%" },
+] as const;
+export async function getSettings(): Promise<DemoSettings> {
+  return readDemo("nexora.settings.v1", settingsSchema, defaultSettings);
+}
+export async function saveSettings(settings: DemoSettings): Promise<DemoSettings> {
+  const validated = settingsSchema.parse(settings);
+  writeDemo("nexora.settings.v1", validated);
+  window.dispatchEvent(new Event("nexora-settings"));
+  return validated;
+}

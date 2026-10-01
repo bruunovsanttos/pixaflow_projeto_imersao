@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { companies, currentUser } from "@/lib/mock-data";
+import { companies, currentUser, notifications, getSettings } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -38,12 +38,6 @@ const navItems = [
   { to: "/assistente", label: "Assistente", icon: MessageSquareText },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ] as const;
-
-const notifications = [
-  { title: "Ruptura de estoque em 3 dias", hint: "Shampoo Professional 500ml", tone: "danger" },
-  { title: "Capacidade de sexta em 106%", hint: "Agenda concentrada à tarde", tone: "warning" },
-  { title: "Nova oportunidade detectada", hint: "Ociosidade às terças, 14h-17h", tone: "insight" },
-];
 
 function Brand() {
   return (
@@ -99,10 +93,10 @@ function SidebarFooterCard() {
     <div className="rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/45 p-4">
       <div className="flex items-center gap-2 text-sidebar-accent-foreground">
         <LifeBuoy className="size-4 text-sidebar-primary" />
-        <p className="text-sm font-semibold">Previsão ativa</p>
+        <p className="text-sm font-semibold">Ambiente de demonstração</p>
       </div>
       <p className="mt-1.5 text-xs leading-relaxed text-sidebar-foreground/65">
-        A Nexora está analisando 14 sinais da sua operação em tempo real.
+        Explore riscos e oportunidades da Bella Studio com dados fictícios.
       </p>
       <Button asChild variant="secondary" size="sm" className="mt-3 w-full">
         <Link to="/simulador" search={{}}>
@@ -129,12 +123,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: (() => void) | undefined 
 }
 
 function CompanySwitcher() {
-  const [company, setCompany] = useState(companies[0]!);
+  const company = companies[0]!;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-accent">
+        <button
+          aria-label="Empresa de demonstração"
+          className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-accent"
+        >
           <span className="grid size-7 place-items-center rounded-lg bg-primary-soft text-primary">
             <Building2 className="size-4" />
           </span>
@@ -146,10 +143,10 @@ function CompanySwitcher() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Empresas</DropdownMenuLabel>
+        <DropdownMenuLabel>Empresa de demonstração</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {companies.map((c) => (
-          <DropdownMenuItem key={c.id} onSelect={() => setCompany(c)}>
+          <DropdownMenuItem key={c.id} disabled>
             <div>
               <p className="text-sm font-medium">{c.name}</p>
               <p className="text-xs text-muted-foreground">{c.segment}</p>
@@ -165,7 +162,10 @@ function NotificationsMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+        <button
+          aria-label="Notificações"
+          className="relative grid size-10 place-items-center rounded-xl border border-border bg-card text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+        >
           <Bell className="size-4.5" />
           <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-danger ring-2 ring-card" />
         </button>
@@ -174,19 +174,21 @@ function NotificationsMenu() {
         <DropdownMenuLabel>Notificações</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {notifications.map((n) => (
-          <DropdownMenuItem key={n.title} className="items-start gap-3 py-2.5">
-            <span
-              className={cn(
-                "mt-1.5 size-2 shrink-0 rounded-full",
-                n.tone === "danger" && "bg-danger",
-                n.tone === "warning" && "bg-warning",
-                n.tone === "insight" && "bg-insight",
-              )}
-            />
-            <span>
-              <span className="block text-sm font-medium">{n.title}</span>
-              <span className="block text-xs text-muted-foreground">{n.hint}</span>
-            </span>
+          <DropdownMenuItem key={n.title} asChild>
+            <Link to={n.to} className="items-start gap-3 py-2.5">
+              <span
+                className={cn(
+                  "mt-1.5 size-2 shrink-0 rounded-full",
+                  n.tone === "danger" && "bg-danger",
+                  n.tone === "warning" && "bg-warning",
+                  n.tone === "insight" && "bg-insight",
+                )}
+              />
+              <span>
+                <span className="block text-sm font-medium">{n.title}</span>
+                <span className="block text-xs text-muted-foreground">{n.hint}</span>
+              </span>
+            </Link>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
@@ -195,6 +197,17 @@ function NotificationsMenu() {
 }
 
 function UserMenu() {
+  const [profile, setProfile] = useState(currentUser);
+  useEffect(() => {
+    const update = () => {
+      void getSettings()
+        .then((settings) => setProfile({ ...currentUser, ...settings }))
+        .catch(() => {});
+    };
+    update();
+    window.addEventListener("nexora-settings", update);
+    return () => window.removeEventListener("nexora-settings", update);
+  }, []);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -203,22 +216,22 @@ function UserMenu() {
             {currentUser.initials}
           </span>
           <span className="hidden leading-tight md:block">
-            <span className="block text-sm font-semibold">{currentUser.name}</span>
-            <span className="block text-[11px] text-muted-foreground">{currentUser.role}</span>
+            <span className="block text-sm font-semibold">{profile.name}</span>
+            <span className="block text-[11px] text-muted-foreground">{profile.role}</span>
           </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
-          <p className="text-sm font-medium">{currentUser.name}</p>
-          <p className="text-xs font-normal text-muted-foreground">{currentUser.email}</p>
+          <p className="text-sm font-medium">{profile.name}</p>
+          <p className="text-xs font-normal text-muted-foreground">{profile.email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/configuracoes">Configurações</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/login">Sair</Link>
+          <Link to="/apresentacao">Voltar à apresentação</Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -256,6 +269,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
+        <div className="border-b bg-primary-soft/40 px-4 py-2 text-xs text-muted-foreground md:px-8">
+          Demonstração · Bella Studio · Dados fictícios · Referência: 28/09/2026{" "}
+          <Link to="/apresentacao" className="ml-2 font-semibold text-primary">
+            Conheça a Nexora
+          </Link>
+        </div>
         <main className="surface-canvas flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
     </div>
