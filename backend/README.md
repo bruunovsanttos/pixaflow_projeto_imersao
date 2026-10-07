@@ -1,8 +1,8 @@
 # Backend Nexora
 
-Base em FastAPI, com Python 3.10 ou superior. Nesta etapa existe somente
-`GET /api/v1/health`, que retorna `{"status":"ok"}`. Nao ha regras de negocio,
-autenticacao ou integracao com o frontend. A infraestrutura PostgreSQL usa SQLAlchemy e Alembic.
+Base em FastAPI, com Python 3.10 ou superior. Disponibiliza health e o nucleo de identidade
+(empresas, usuarios, vinculos e preferencias). Nao ha autenticacao
+ou integracao com o frontend. A infraestrutura PostgreSQL usa SQLAlchemy e Alembic.
 
 ## Executar no Windows (PowerShell)
 
@@ -50,7 +50,7 @@ o `.env`; o arquivo e localizado relativamente ao backend.
 
 ## Proximas implementacoes
 
-O fluxo das funcionalidades sera `routes -> services -> repositories`, com
+O fluxo das funcionalidades de identidade e `routes -> services -> repositories`, com
 `schemas` definindo os contratos HTTP, `models` representando entidades e
 `database` cuidando da infraestrutura de persistencia. `core` concentra
 configuracoes compartilhadas. A rota de health nao precisa dessas camadas.
@@ -93,3 +93,59 @@ Depois de revisar a migration, o comando para criar as tabelas sera:
 
 Gerar uma migration nao aplica as tabelas de negocio. `upgrade head` deve ser
 executado somente quando for hora de aplicar o schema.
+
+
+## Nucleo de identidade
+
+Fluxo: `routes -> services -> repositories -> database`.
+
+- `schemas/company.py`, `user.py`, `membership.py`: contratos Pydantic v2
+  separados para create e response; strings limitadas aos tamanhos dos models,
+  campos extras proibidos, UUIDs tipados e email validado por `EmailStr`.
+  Slugs usam letras minusculas ASCII, numeros e hifens entre palavras.
+- `schemas/preference.py`: update parcial e response. No PUT, campos omitidos
+  sao preservados; null explicito e rejeitado. Horizontes: 7, 15 ou 30 dias.
+- `repositories/*_repository.py`: consultas e alteracoes ORM, sem regras HTTP
+  ou commits. Consultas de vinculos sao filtradas por empresa.
+- `services/*_service.py`: existencia, unicidade, pertencimento e transacoes.
+  `MembershipService.get(..., company_id=...)` rejeita vinculos de outra empresa.
+  O cadastro do vinculo cria preferencias padrao atomicamente. GET nao escreve;
+  se um vinculo antigo nao tiver preferencias, retorna 404 e PUT pode cria-las.
+- `routes/`: recebe `Session` via `Depends(get_db)`, chama services e serializa
+  respostas. Os quatro routers estao registrados no router principal.
+
+Endpoints (prefixo `/api/v1`):
+
+| Metodo | Caminho |
+| --- | --- |
+| POST / GET | `/companies` |
+| GET | `/companies/{company_id}` |
+| POST | `/users` |
+| GET | `/users/{user_id}` |
+| POST / GET | `/companies/{company_id}/memberships` |
+| GET / PUT | `/memberships/{membership_id}/preferences` |
+
+Listagens aceitam `offset >= 0` e `limit` de 1 a 100 (padrao 100).
+Criacoes retornam 201; consultas e PUT retornam 200. Recursos ausentes retornam
+404, conflitos de unicidade/integridade 409 e entradas invalidas 422.
+Email segue a normalizacao do EmailStr; a unicidade segue a comparacao do banco
+(case-sensitive na parte local). Nao ha autenticacao: o pertencimento garante
+consistencia dos vinculos, nao autorizacao do solicitante. Os endpoints de
+preferencias identificam a empresa pelo membership, sem aceitar outro company_id.
+
+### Testes isolados
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+Os testes usam TestClient, substituem `get_db` e criam somente as quatro tabelas
+de identidade em SQLite em memoria, descartado ao final de cada teste. Nao
+conectam ao PostgreSQL nem aplicam migrations. Cobrem os nove endpoints,
+validacao, conflitos, rollback, isolamento entre empresas, preferencias de
+vinculos antigos, imports, OpenAPI, health e CORS. SQLite nao substitui a
+validacao de integracao futura em PostgreSQL.
+
+O banco real precisa receber a migration revisada antes do uso dos endpoints.
+Esta implementacao nao executa migrations nem cria tabelas no startup.
