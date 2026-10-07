@@ -1,4 +1,8 @@
-"""Espaco para conexao, sessoes e migracoes quando o banco for definido.
+"""Database metadata. Session dependencies live in app.database.session.
 
-Esta base ainda nao abre conexoes nem cria tabelas.
+Keep metadata imports independent of environment configuration and connections.
 """
+
+from app.database.base import Base
+
+__all__ = ["Base"]

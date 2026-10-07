@@ -2,7 +2,7 @@
 
 Base em FastAPI, com Python 3.10 ou superior. Nesta etapa existe somente
 `GET /api/v1/health`, que retorna `{"status":"ok"}`. Nao ha regras de negocio,
-autenticacao, banco configurado ou integracao com o frontend.
+autenticacao ou integracao com o frontend. A infraestrutura PostgreSQL usa SQLAlchemy e Alembic.
 
 ## Executar no Windows (PowerShell)
 
@@ -40,9 +40,9 @@ o `.env`; o arquivo e localizado relativamente ao backend.
 | `app/schemas/__init__.py` | Define o pacote de contratos de entrada e saida. |
 | `app/schemas/health.py` | Define o formato tipado da resposta de health. |
 | `app/services/__init__.py` | Reserva a camada de regras de negocio e casos de uso. |
-| `app/models/__init__.py` | Reserva a camada de entidades e futuros modelos de persistencia. |
+| `app/models/__init__.py` | Importa os 14 models e registra suas tabelas no metadata. |
 | `app/repositories/__init__.py` | Reserva a camada de consultas e persistencia. |
-| `app/database/__init__.py` | Reserva a infraestrutura de conexao, sessoes e migracoes, sem escolher um banco nesta etapa. |
+| `app/database/__init__.py` | Exporta Base sem abrir conexoes; session.py fornece engine, SessionLocal e get_db. |
 | `requirements.txt` | Declara as dependencias da API e seus intervalos de versao. |
 | `.env.example` | Documenta configuracoes locais, sem segredos. |
 | `.gitignore` | Exclui ambiente virtual, caches e configuracoes locais do Git. |
@@ -60,3 +60,36 @@ Os contratos futuros devem acompanhar os tipos exportados em
 por chamadas HTTP preservando esses tipos. O frontend continua com os mocks.
 
 Referencia: [aplicacoes com multiplos arquivos no FastAPI](https://fastapi.tiangolo.com/tutorial/bigger-applications/).
+
+## PostgreSQL e migrations
+
+Configure `DATABASE_URL` no ambiente ou em `backend/.env`, usando
+`postgresql+psycopg://usuario:senha@localhost:5432/nexora`.
+O banco deve existir. Codifique caracteres especiais da senha na URL.
+A variavel `DATABASE_URL` nao usa o prefixo `NEXORA_` e e obrigatoria.
+
+A engine mantem um pool de conexoes e usa `pool_pre_ping=True` para verificar
+conexoes ao retira-las do pool. Sua criacao nao abre uma conexao imediatamente.
+`SessionLocal` cria sessoes sincronas; `get_db` fornece uma sessao por requisicao
+via `Depends(get_db)` e sempre a fecha. Commits sao explicitos; fechar a sessao
+reverte transacoes pendentes. Nao ha criacao de tabelas no startup.
+
+O Alembic importa `app.models` para registrar todas as entidades em
+`Base.metadata` e compara esse metadata com PostgreSQL no autogenerate.
+Revise sempre as migrations geradas, incluindo constraints e defaults.
+Defaults Python, como UUID e flags, nao sao defaults do servidor PostgreSQL.
+
+Dentro de `backend/`, para gerar a migration inicial contra um banco vazio:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic revision --autogenerate -m "initial_schema"
+```
+
+Depois de revisar a migration, o comando para criar as tabelas sera:
+
+```powershell
+.\.venv\Scripts\python.exe -m alembic upgrade head
+```
+
+Gerar uma migration nao aplica as tabelas de negocio. `upgrade head` deve ser
+executado somente quando for hora de aplicar o schema.
