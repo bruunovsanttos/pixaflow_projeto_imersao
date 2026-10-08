@@ -202,7 +202,6 @@ class SimulationTests(unittest.TestCase):
         self.assertEqual(set(schema['paths']['/api/v1/companies/{company_id}/simulations/{simulation_id}']),{'get'})
         required=schema['components']['schemas']['SimulationCreate']['required']
         self.assertTrue({'baseline','simulated','created_by_membership_id'} <= set(required))
-        self.assertFalse(any('saved-scenarios' in path for path in schema['paths']))
 
 
 if __name__ == '__main__':

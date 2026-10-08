@@ -14,6 +14,8 @@ from app.routes.timeline_events import router as timeline_events_router
 
 from app.routes.simulations import router as simulations_router
 
+from app.routes.saved_scenarios import router as saved_scenarios_router
+
 api_router = APIRouter()
 api_router.include_router(health_router)
 api_router.include_router(companies_router)
@@ -24,3 +26,4 @@ api_router.include_router(risks_router)
 api_router.include_router(opportunities_router)
 api_router.include_router(timeline_events_router)
 api_router.include_router(simulations_router)
+api_router.include_router(saved_scenarios_router)

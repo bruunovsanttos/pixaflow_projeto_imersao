@@ -148,7 +148,7 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(self.client.get("/api/v1/health").json(),{"status":"ok"})
         schema=self.client.get("/openapi.json")
         self.assertEqual(schema.status_code,200)
-        self.assertEqual(sum(method in {"get","post","put"} for path in schema.json()["paths"].values() for method in path),21)
+        self.assertEqual(sum(method in {"get","post","put"} for path in schema.json()["paths"].values() for method in path),24)
         response=self.client.options("/api/v1/companies",headers={"Origin":"http://localhost:5173","Access-Control-Request-Method":"POST"})
         self.assertEqual(response.status_code,200)
 
