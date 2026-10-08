@@ -10,6 +10,8 @@ from app.routes.risks import router as risks_router
 
 from app.routes.opportunities import router as opportunities_router
 
+from app.routes.timeline_events import router as timeline_events_router
+
 api_router = APIRouter()
 api_router.include_router(health_router)
 api_router.include_router(companies_router)
@@ -18,3 +20,4 @@ api_router.include_router(memberships_router)
 api_router.include_router(preferences_router)
 api_router.include_router(risks_router)
 api_router.include_router(opportunities_router)
+api_router.include_router(timeline_events_router)
