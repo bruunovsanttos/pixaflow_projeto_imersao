@@ -6,9 +6,12 @@ from app.routes.users import router as users_router
 from app.routes.memberships import router as memberships_router
 from app.routes.preferences import router as preferences_router
 
+from app.routes.risks import router as risks_router
+
 api_router = APIRouter()
 api_router.include_router(health_router)
 api_router.include_router(companies_router)
 api_router.include_router(users_router)
 api_router.include_router(memberships_router)
 api_router.include_router(preferences_router)
+api_router.include_router(risks_router)
