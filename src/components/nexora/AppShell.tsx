@@ -14,7 +14,7 @@ import {
   SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { companies, currentUser, notifications, getSettings } from "@/lib/mock-data";
+import { notifications } from "@/lib/mock-data";
+import { useIdentity } from "@/hooks/use-identity";
+import { profileInitials } from "@/lib/api/identity";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -89,6 +91,7 @@ function NavList({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
 }
 
 function SidebarFooterCard() {
+  const { company } = useIdentity();
   return (
     <div className="rounded-2xl border border-sidebar-border/70 bg-sidebar-accent/45 p-4">
       <div className="flex items-center gap-2 text-sidebar-accent-foreground">
@@ -96,7 +99,7 @@ function SidebarFooterCard() {
         <p className="text-sm font-semibold">Ambiente de demonstração</p>
       </div>
       <p className="mt-1.5 text-xs leading-relaxed text-sidebar-foreground/65">
-        Explore riscos e oportunidades da Bella Studio com dados fictícios.
+        Explore riscos e oportunidades de {company.name}. Algumas áreas permanecem em demonstração.
       </p>
       <Button asChild variant="secondary" size="sm" className="mt-3 w-full">
         <Link to="/simulador" search={{}}>
@@ -123,29 +126,32 @@ function SidebarContent({ onNavigate }: { onNavigate?: (() => void) | undefined 
 }
 
 function CompanySwitcher() {
-  const company = companies[0]!;
+  const { company, companySource } = useIdentity();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          aria-label="Empresa de demonstração"
+          aria-label="Empresa atual"
+          data-company-source={companySource}
           className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2 text-left transition-colors hover:border-primary/40 hover:bg-accent"
         >
           <span className="grid size-7 place-items-center rounded-lg bg-primary-soft text-primary">
             <Building2 className="size-4" />
           </span>
           <span className="hidden leading-tight sm:block">
-            <span className="block text-sm font-semibold">{company.name}</span>
+            <span className="block text-sm font-semibold">
+              {companySource === "loading" ? "Carregando empresa…" : company.name}
+            </span>
             <span className="block text-[11px] text-muted-foreground">{company.segment}</span>
           </span>
           <ChevronDown className="size-4 text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuLabel>Empresa de demonstração</DropdownMenuLabel>
+        <DropdownMenuLabel>Empresa atual</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {companies.map((c) => (
+        {[company].map((c) => (
           <DropdownMenuItem key={c.id} disabled>
             <div>
               <p className="text-sm font-medium">{c.name}</p>
@@ -197,23 +203,13 @@ function NotificationsMenu() {
 }
 
 function UserMenu() {
-  const [profile, setProfile] = useState(currentUser);
-  useEffect(() => {
-    const update = () => {
-      void getSettings()
-        .then((settings) => setProfile({ ...currentUser, ...settings }))
-        .catch(() => {});
-    };
-    update();
-    window.addEventListener("nexora-settings", update);
-    return () => window.removeEventListener("nexora-settings", update);
-  }, []);
+  const { settings: profile } = useIdentity();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2.5 rounded-xl border border-border bg-card py-1.5 pl-1.5 pr-3 transition-colors hover:border-primary/40">
           <span className="grid size-8 place-items-center rounded-lg bg-[image:var(--gradient-brand)] text-xs font-semibold text-primary-foreground">
-            {currentUser.initials}
+            {profileInitials(profile.name)}
           </span>
           <span className="hidden leading-tight md:block">
             <span className="block text-sm font-semibold">{profile.name}</span>
@@ -240,6 +236,7 @@ function UserMenu() {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const identity = useIdentity();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -269,8 +266,27 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="border-b bg-primary-soft/40 px-4 py-2 text-xs text-muted-foreground md:px-8">
-          Demonstração · Bella Studio · Dados fictícios · Referência: 28/09/2026{" "}
+        <div
+          role="status"
+          aria-live="polite"
+          data-identity-source={identity.source}
+          className="border-b bg-primary-soft/40 px-4 py-2 text-xs text-muted-foreground md:px-8"
+        >
+          {identity.source === "loading"
+            ? "Carregando empresa, perfil e preferências…"
+            : identity.source === "api"
+              ? `Perfil e preferências carregados · ${identity.company.name}`
+              : "Identidade indisponível · Perfil e preferências de demonstração"}{" "}
+          {identity.source === "mock" ? (
+            <button
+              type="button"
+              className="ml-2 font-semibold text-primary"
+              disabled={identity.isFetching}
+              onClick={identity.retry}
+            >
+              {identity.isFetching ? "Tentando novamente…" : "Tentar novamente"}
+            </button>
+          ) : null}
           <Link to="/apresentacao" className="ml-2 font-semibold text-primary">
             Conheça a Nexora
           </Link>

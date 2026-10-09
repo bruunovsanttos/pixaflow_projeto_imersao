@@ -149,7 +149,13 @@ export function RiskCard({ risk, compact = false }: { risk: Risk; compact?: bool
   );
 }
 
-export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
+export function OpportunityCard({
+  opportunity,
+  labels,
+}: {
+  opportunity: Opportunity;
+  labels?: { roi: string; benefit: string };
+}) {
   const effortTone: Record<Opportunity["effort"], Tone> = {
     Baixo: "success",
     Médio: "warning",
@@ -180,7 +186,9 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div>
-          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Receita</p>
+          <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+            {labels?.benefit ?? "Receita"}
+          </p>
           <p className="font-display text-base font-semibold text-success">
             +{currency(opportunity.potentialRevenue)}
           </p>
@@ -192,7 +200,7 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
         <div>
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground">ROI</p>
           <p className="font-display text-base font-semibold">
-            {opportunity.roi === null ? "Não aplicável" : `${opportunity.roi}%`}
+            {labels?.roi ?? (opportunity.roi === null ? "Não aplicável" : `${opportunity.roi}%`)}
           </p>
         </div>
         <div>

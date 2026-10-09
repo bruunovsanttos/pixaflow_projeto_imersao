@@ -149,3 +149,24 @@ validacao de integracao futura em PostgreSQL.
 
 O banco real precisa receber a migration revisada antes do uso dos endpoints.
 Esta implementacao nao executa migrations nem cria tabelas no startup.
+
+## Deploy no Render
+
+O Blueprint `../render.yaml` configura a API e o frontend como servicos web e
+nao cria um banco. Configure `DATABASE_URL` com a URL interna do PostgreSQL
+existente, `NEXORA_CORS_ORIGINS` como JSON contendo a origem HTTPS exata do
+frontend (por exemplo, `["https://nexora-frontend.onrender.com"]`) e
+`VITE_API_URL` com a URL publica da API mais `/api/v1`. O backend inicia com
+`uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+
+Antes do primeiro deploy, confira `python -m alembic current` e `python -m alembic heads` no ambiente ligado ao banco de producao. Se o banco ainda nao
+estiver na revisao indicada, revise o estado e faca o upgrade aprovado com
+`python -m alembic upgrade head` como comando manual de pre-deploy; nao use
+`downgrade` nem rode o seed automaticamente. O seed e opcional apenas para
+uma demonstracao vazia, e tem protecoes para o banco `nexora`; nao e necessario
+para manter dados existentes.
+
+Health check: `/api/v1/health`. Ele confirma que o processo responde, nao que
+o banco esta conectado. A API nao possui autenticacao/autorizacao; nao exponha
+dados privados ou permita uso multiempresa em producao antes de implementar
+essas protecoes.

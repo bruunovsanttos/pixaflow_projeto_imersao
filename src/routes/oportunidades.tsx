@@ -5,7 +5,11 @@ import { useState } from "react";
 import { AppShell } from "@/components/nexora/AppShell";
 import { OpportunityCard } from "@/components/nexora/cards";
 import { EmptyState, PageHeader, Pill } from "@/components/nexora/primitives";
-import { currency, opportunities } from "@/lib/mock-data";
+import { opportunities as mockOpportunities } from "@/lib/mock-data";
+import { DataSourceStatus } from "@/components/nexora/DataSourceStatus";
+import { useCompanyData } from "@/hooks/use-company-data";
+import { getOpportunities } from "@/lib/api/opportunities";
+import { opportunityListSchema, opportunityLabels } from "@/lib/api/company-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/oportunidades")({
@@ -29,6 +33,13 @@ export const Route = createFileRoute("/oportunidades")({
 const filters = ["Todas", "Baixo esforço", "Médio esforço", "Alto esforço"] as const;
 
 function OpportunitiesPage() {
+  const resource = useCompanyData(
+    "opportunities",
+    getOpportunities,
+    opportunityListSchema,
+    mockOpportunities,
+  );
+  const opportunities = resource.data;
   const [filter, setFilter] = useState<(typeof filters)[number]>("Todas");
 
   const filtered = opportunities.filter((o) => {
@@ -36,11 +47,9 @@ function OpportunitiesPage() {
     return `${o.effort} esforço` === filter;
   });
 
-  const total = opportunities.reduce((acc, o) => acc + o.potentialRevenue, 0);
-
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="mx-auto w-full max-w-6xl" aria-busy={resource.source === "loading"}>
         <PageHeader
           eyebrow="Oportunidades"
           title="Oportunidades"
@@ -51,6 +60,12 @@ function OpportunitiesPage() {
               <Pill tone="success">Potenciais por ação</Pill>
             </div>
           }
+        />
+
+        <DataSourceStatus
+          source={resource.source}
+          isFetching={resource.isFetching}
+          onRetry={resource.retry}
         />
 
         <div className="mb-5 flex flex-wrap gap-2">
@@ -70,7 +85,7 @@ function OpportunitiesPage() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {resource.source === "loading" ? null : filtered.length === 0 ? (
           <EmptyState
             icon={<Lightbulb className="size-6" />}
             title="Nenhuma oportunidade neste filtro"
@@ -79,7 +94,7 @@ function OpportunitiesPage() {
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
             {filtered.map((o) => (
-              <OpportunityCard key={o.id} opportunity={o} />
+              <OpportunityCard key={o.id} opportunity={o} labels={opportunityLabels(o)} />
             ))}
           </div>
         )}

@@ -5,7 +5,11 @@ import { useState } from "react";
 import { AppShell } from "@/components/nexora/AppShell";
 import { RiskCard } from "@/components/nexora/cards";
 import { EmptyState, PageHeader, Pill } from "@/components/nexora/primitives";
-import { currency, risks } from "@/lib/mock-data";
+import { currency, risks as mockRisks } from "@/lib/mock-data";
+import { DataSourceStatus } from "@/components/nexora/DataSourceStatus";
+import { useCompanyData } from "@/hooks/use-company-data";
+import { getRisks } from "@/lib/api/risks";
+import { riskListSchema } from "@/lib/api/company-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/riscos")({
@@ -37,6 +41,8 @@ const filters = [
 ] as const;
 
 function RisksPage() {
+  const resource = useCompanyData("risks", getRisks, riskListSchema, mockRisks);
+  const risks = resource.data;
   const [filter, setFilter] = useState<(typeof filters)[number]>("Todos");
 
   const filtered = risks.filter((r) => {
@@ -50,7 +56,7 @@ function RisksPage() {
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-6xl">
+      <div className="mx-auto w-full max-w-6xl" aria-busy={resource.source === "loading"}>
         <PageHeader
           eyebrow="Riscos"
           title="Central de Riscos"
@@ -63,6 +69,12 @@ function RisksPage() {
               <Pill tone="warning">Impacto exposto {currency(totalImpact)}</Pill>
             </div>
           }
+        />
+
+        <DataSourceStatus
+          source={resource.source}
+          isFetching={resource.isFetching}
+          onRetry={resource.retry}
         />
 
         <div className="mb-5 flex flex-wrap gap-2">
@@ -82,7 +94,7 @@ function RisksPage() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {resource.source === "loading" ? null : filtered.length === 0 ? (
           <EmptyState
             icon={<ShieldCheck className="size-6" />}
             title="Nenhum risco neste filtro"

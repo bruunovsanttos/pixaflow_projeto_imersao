@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { AppShell } from "@/components/nexora/AppShell";
 import {
+  EmptyState,
   PageHeader,
   Panel,
   Pill,
@@ -19,7 +20,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { timeline, type TimelineEvent } from "@/lib/mock-data";
+import { timeline as mockTimeline } from "@/lib/mock-data";
+import { DataSourceStatus } from "@/components/nexora/DataSourceStatus";
+import { useCompanyData } from "@/hooks/use-company-data";
+import { getTimelineEvents } from "@/lib/api/timeline";
+import { timelineListSchema, formatTimelineDate } from "@/lib/api/company-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/linha-do-tempo")({
@@ -41,11 +46,14 @@ export const Route = createFileRoute("/linha-do-tempo")({
 });
 
 function TimelinePage() {
-  const [selected, setSelected] = useState<TimelineEvent | null>(null);
+  const resource = useCompanyData("timeline", getTimelineEvents, timelineListSchema, mockTimeline);
+  const timeline = resource.data;
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = timeline.find((event) => event.id === selectedId) ?? null;
 
   return (
     <AppShell>
-      <div className="mx-auto w-full max-w-5xl">
+      <div className="mx-auto w-full max-w-5xl" aria-busy={resource.source === "loading"}>
         <PageHeader
           eyebrow="Linha do Tempo"
           title="Linha do tempo do futuro"
@@ -65,39 +73,52 @@ function TimelinePage() {
           }
         />
 
-        <Panel>
-          <ol className="relative space-y-1 pl-8">
-            <span className="absolute bottom-4 left-[7px] top-4 w-px bg-border" />
-            {timeline.map((event) => (
-              <li key={event.id} className="relative">
-                <span
-                  className={cn(
-                    "absolute -left-8 top-5 size-3.5 rounded-full ring-4 ring-card",
-                    severityDot[event.severity],
-                  )}
-                />
-                <button
-                  onClick={() => setSelected(event)}
-                  className="w-full rounded-xl border border-transparent px-4 py-4 text-left transition-all duration-200 hover:border-border hover:bg-accent/50"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                      {event.date}
-                    </span>
-                    <Pill tone={severityTone[event.severity]}>
-                      {severityLabel[event.severity]}
-                    </Pill>
-                  </div>
-                  <p className="mt-1 text-base font-semibold">{event.title}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{event.description}</p>
-                </button>
-              </li>
-            ))}
-          </ol>
-        </Panel>
+        <DataSourceStatus
+          source={resource.source}
+          isFetching={resource.isFetching}
+          onRetry={resource.retry}
+        />
+        {resource.source === "loading" ? null : timeline.length === 0 ? (
+          <EmptyState
+            icon={<CircleAlert className="size-6" />}
+            title="Nenhum evento previsto"
+            description="Não há eventos previstos para esta empresa."
+          />
+        ) : (
+          <Panel>
+            <ol className="relative space-y-1 pl-8">
+              <span className="absolute bottom-4 left-[7px] top-4 w-px bg-border" />
+              {timeline.map((event) => (
+                <li key={event.id} className="relative">
+                  <span
+                    className={cn(
+                      "absolute -left-8 top-5 size-3.5 rounded-full ring-4 ring-card",
+                      severityDot[event.severity],
+                    )}
+                  />
+                  <button
+                    onClick={() => setSelectedId(event.id)}
+                    className="w-full rounded-xl border border-transparent px-4 py-4 text-left transition-all duration-200 hover:border-border hover:bg-accent/50"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-display text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                        {formatTimelineDate(event.date)}
+                      </span>
+                      <Pill tone={severityTone[event.severity]}>
+                        {severityLabel[event.severity]}
+                      </Pill>
+                    </div>
+                    <p className="mt-1 text-base font-semibold">{event.title}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{event.description}</p>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </Panel>
+        )}
       </div>
 
-      <Sheet open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+      <Sheet open={!!selected} onOpenChange={(open) => !open && setSelectedId(null)}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-md">
           {selected ? (
             <>
@@ -107,7 +128,7 @@ function TimelinePage() {
                     {severityLabel[selected.severity]}
                   </Pill>
                   <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {selected.date}
+                    {formatTimelineDate(selected.date)}
                   </span>
                 </div>
                 <SheetTitle className="text-left">{selected.title}</SheetTitle>

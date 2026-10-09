@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: nexora-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.2
+      - key: DATABASE_URL
+        sync: false
+      - key: NEXORA_CORS_ORIGINS
+        sync: false
+      - key: NEXORA_APP_NAME
+        value: Nexora API
+
+  - type: web
+    name: nexora-frontend
+    runtime: node
+    rootDir: .
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: VITE_API_URL
+        sync: false
