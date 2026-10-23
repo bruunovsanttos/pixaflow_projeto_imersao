@@ -50,6 +50,7 @@ async function request<T>(path: string, params: QueryParams, init: RequestInit):
   } catch (cause) {
     throw new ApiError(0, "Não foi possível conectar à API.", { cause });
   }
+  if (response.status === 204 && response.ok) return undefined as T;
   let body: unknown;
   try {
     body = await response.json();
@@ -74,7 +75,7 @@ async function request<T>(path: string, params: QueryParams, init: RequestInit):
 }
 
 export function get<T>(path: string, params: QueryParams = {}): Promise<T> {
-  return request<T>(path, params, { method: "GET" });
+  return request<T>(path, params, { method: "GET", signal: AbortSignal.timeout(15000) });
 }
 export function put<T>(path: string, body: unknown): Promise<T> {
   return request<T>(
@@ -87,4 +88,20 @@ export function put<T>(path: string, body: unknown): Promise<T> {
       signal: AbortSignal.timeout(10000),
     },
   );
+}
+
+export function post<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(
+    path,
+    {},
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
+    },
+  );
+}
+export function remove(path: string): Promise<void> {
+  return request<void>(path, {}, { method: "DELETE", signal: AbortSignal.timeout(15000) });
 }

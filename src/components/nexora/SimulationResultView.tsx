@@ -69,8 +69,8 @@ export function SimulationResultView({ result }: { result: SimulationResult }) {
           </div>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Saldo = receita adicional − custo adicional; não representa lucro líquido. Capital de
-          abertura separado: {currency(result.initialCapital)}.
+          Saldo = receita adicional + economia estimada − custo adicional; não representa lucro
+          líquido. Capital de abertura separado: {currency(result.initialCapital)}.
         </p>
       </Panel>
       <Panel

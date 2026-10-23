@@ -1,18 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { CheckCircle2, Loader2, Send, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { AppShell } from "@/components/nexora/AppShell";
 import { PageHeader, Pill, toneStyles, type Tone } from "@/components/nexora/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  assistantAnswers,
-  assistantSuggestions,
-  currentUser,
-  defaultAssistantAnswer,
-  type AssistantAnswer,
-} from "@/lib/mock-data";
+import { askCompany, realAssistantSuggestions, type SourcedAnswer } from "@/lib/api/assistant";
+import { useIdentity } from "@/hooks/use-identity";
+import { profileInitials } from "@/lib/api/identity";
+import { DashboardDataStatus } from "@/components/nexora/DashboardDataStatus";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/assistente")({
@@ -37,10 +34,10 @@ interface Message {
   id: number;
   role: "user" | "assistant";
   text: string;
-  answer?: AssistantAnswer;
+  answer?: SourcedAnswer;
 }
 
-function AnswerBlock({ answer }: { answer: AssistantAnswer }) {
+function AnswerBlock({ answer }: { answer: SourcedAnswer }) {
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed">{answer.text}</p>
@@ -68,33 +65,45 @@ function AnswerBlock({ answer }: { answer: AssistantAnswer }) {
           </li>
         ))}
       </ul>
+      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+        {answer.sources.map((source) => (
+          <Link key={source.to} to={source.to} className="underline">
+            Fonte: {source.label}
+          </Link>
+        ))}
+        <span>Consultado em {new Date(answer.consultedAt).toLocaleString("pt-BR")}</span>
+      </div>
     </div>
   );
 }
 
 function AssistantPage() {
+  const identity = useIdentity();
+  const inFlight = useRef(false);
+  const [error, setError] = useState("");
+  const [lastQuestion, setLastQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
 
-  function ask(question: string) {
+  async function ask(question: string, retry = false) {
     const text = question.trim();
-    if (!text || thinking) return;
+    if (!text || inFlight.current || identity.companySource !== "api") return;
+    inFlight.current = true;
     setInput("");
-    setMessages((prev) => [...prev, { id: Date.now(), role: "user", text }]);
+    setError("");
+    setLastQuestion(text);
+    if (!retry) setMessages((prev) => [...prev, { id: Date.now(), role: "user", text }]);
     setThinking(true);
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          role: "assistant",
-          text: "",
-          answer: assistantAnswers[text] ?? defaultAssistantAnswer,
-        },
-      ]);
+    try {
+      const answer = await askCompany(identity.company.id, text);
+      setMessages((prev) => [...prev, { id: Date.now() + 1, role: "assistant", text: "", answer }]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Não foi possível consultar os dados.");
+    } finally {
       setThinking(false);
-    }, 1100);
+      inFlight.current = false;
+    }
   }
 
   return (
@@ -103,9 +112,31 @@ function AssistantPage() {
         <PageHeader
           eyebrow="Assistente"
           title="Assistente Nexora"
-          description="Pergunte sobre a sua operação. As respostas vêm com números, cards e recomendações."
+          description="Consulte riscos, oportunidades e eventos reais da empresa. Respostas por assunto, sem IA generativa."
         />
 
+        {identity.companySource !== "api" && (
+          <DashboardDataStatus
+            label="Empresa"
+            resource={{
+              source: identity.companySource,
+              isFetching: identity.isFetching,
+              retry: identity.retry,
+            }}
+          />
+        )}
+        {error && (
+          <div role="alert" className="mb-4 rounded-xl border p-4">
+            <p>{error}</p>
+            <Button
+              variant="outline"
+              disabled={thinking}
+              onClick={() => void ask(lastQuestion, true)}
+            >
+              Tentar novamente
+            </Button>
+          </div>
+        )}
         <div className="flex min-h-[460px] flex-col rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
           <div className="flex-1 space-y-5 overflow-y-auto p-5 md:p-6">
             {messages.length === 0 && !thinking ? (
@@ -113,10 +144,12 @@ function AssistantPage() {
                 <div className="grid size-12 place-items-center rounded-2xl bg-[image:var(--gradient-brand)]">
                   <Sparkles className="size-6 text-primary-foreground" />
                 </div>
-                <p className="mt-4 text-base font-semibold">Como posso ajudar, Bruno?</p>
+                <p className="mt-4 text-base font-semibold">
+                  Como posso ajudar
+                  {identity.source === "api" ? `, ${identity.settings.name.split(" ")[0]}` : ""}?
+                </p>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  Faça uma pergunta sobre riscos, receita, capacidade ou oportunidades da sua
-                  operação.
+                  Consulte os riscos, oportunidades ou próximos eventos cadastrados na sua empresa.
                 </p>
               </div>
             ) : null}
@@ -128,7 +161,7 @@ function AssistantPage() {
                     {m.text}
                   </div>
                   <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-semibold">
-                    {currentUser.initials}
+                    {identity.source === "api" ? profileInitials(identity.settings.name) : "?"}
                   </span>
                 </div>
               ) : (
@@ -149,17 +182,18 @@ function AssistantPage() {
                   <Sparkles className="size-4 text-primary-foreground" />
                 </span>
                 <Loader2 className="size-4 animate-spin" />
-                Preparando resposta demonstrativa...
+                Consultando os dados da empresa...
               </div>
             ) : null}
           </div>
 
           <div className="border-t border-border p-4">
             <div className="mb-3 flex flex-wrap gap-2">
-              {assistantSuggestions.map((s) => (
+              {realAssistantSuggestions.map((s) => (
                 <button
                   key={s}
-                  onClick={() => ask(s)}
+                  onClick={() => void ask(s)}
+                  disabled={thinking || identity.companySource !== "api"}
                   className="rounded-full border border-border px-3 py-1.5 text-xs text-muted-foreground transition-all duration-200 hover:border-primary/40 hover:text-foreground"
                 >
                   {s}
@@ -181,7 +215,11 @@ function AssistantPage() {
                 placeholder="Pergunte algo sobre a sua operação..."
                 className="h-11"
               />
-              <Button type="submit" size="lg" disabled={thinking || !input.trim()}>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={thinking || !input.trim() || identity.companySource !== "api"}
+              >
                 <Send className="size-4" />
                 <span className="sr-only">Enviar</span>
               </Button>
@@ -190,7 +228,7 @@ function AssistantPage() {
         </div>
 
         <div className="mt-4 flex items-center gap-2">
-          <Pill tone="primary">Respostas baseadas em dados fictícios de demonstração</Pill>
+          <Pill tone="primary">Consulta aos registros da empresa · Sem previsões inventadas</Pill>
         </div>
       </div>
     </AppShell>

@@ -80,3 +80,12 @@ test("saved scenarios survive reload, can be removed, and storage failures surfa
   await assert.rejects(data.saveScenario(input("hire", 1)));
   delete globalThis.window;
 });
+
+test("real opportunity cost savings affect balance without inflating revenue", () => {
+  const opportunity = { ...data.opportunities[0], id: "real-opportunity", benefitType: "cost_saving", potentialRevenue: 1480, cost: 100, extraClients: 0, horizon: "15 dias" };
+  const result = data.calculateSimulation(input("opportunity", 100, { opportunityId: opportunity.id }), [opportunity]);
+  assert.equal(result.simulated.revenue, result.baseline.revenue);
+  assert.equal(result.incrementalBalance, 1380);
+  assert.equal(result.horizon, "15 dias");
+  assert.throws(() => data.calculateSimulation(input("opportunity", 100, { opportunityId: "capacidade-ociosa" }), []));
+});

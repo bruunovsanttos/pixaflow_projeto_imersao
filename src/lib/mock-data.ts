@@ -660,7 +660,10 @@ export function suggestDecision(question: string): DecisionKind {
 }
 
 // Pure, deterministic demo rules. The form confirms the variables; text is not interpreted by AI.
-export function calculateSimulation(input: SimulationInput): SimulationResult {
+export function calculateSimulation(
+  input: SimulationInput,
+  availableOpportunities: Opportunity[] = opportunities,
+): SimulationResult {
   const option = decisionOptions.find((item) => item.id === input.kind);
   if (
     !option ||
@@ -673,7 +676,7 @@ export function calculateSimulation(input: SimulationInput): SimulationResult {
   }
   const opportunity =
     input.kind === "opportunity"
-      ? opportunities.find((item) => item.id === input.opportunityId)
+      ? availableOpportunities.find((item) => item.id === input.opportunityId)
       : undefined;
   if (input.kind === "opportunity" && !opportunity)
     throw new Error("Selecione uma oportunidade válida.");
@@ -687,6 +690,7 @@ export function calculateSimulation(input: SimulationInput): SimulationResult {
   let clients = baseline.clients,
     revenue = baseline.revenue,
     capacity = baseline.capacity;
+  let savings = 0;
   let additionalCost = 0,
     initialCapital = 0;
   let horizon = "30 dias";
@@ -716,7 +720,9 @@ export function calculateSimulation(input: SimulationInput): SimulationResult {
     if (!opportunity) throw new Error("Selecione uma oportunidade válida.");
     const factor = amount / 100;
     additionalCost = opportunity.cost * factor;
-    revenue += opportunity.potentialRevenue * factor;
+    if ("benefitType" in opportunity && opportunity.benefitType === "cost_saving")
+      savings = opportunity.potentialRevenue * factor;
+    else revenue += opportunity.potentialRevenue * factor;
     clients += opportunity.extraClients * factor;
     capacity *= clients / baseline.clients;
     horizon = opportunity.horizon;
@@ -733,7 +739,7 @@ export function calculateSimulation(input: SimulationInput): SimulationResult {
     simulated,
     additionalCost: Math.round(additionalCost),
     initialCapital,
-    incrementalBalance: Math.round(revenue - baseline.revenue - additionalCost),
+    incrementalBalance: Math.round(revenue - baseline.revenue + savings - additionalCost),
     horizon,
     assumption: option.assumption,
     recommendations:
