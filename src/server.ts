@@ -1,3 +1,4 @@
+import { proxyApi } from "./lib/server/api-proxy";
 import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
@@ -46,6 +47,7 @@ function isH3SwallowedErrorBody(body: string): boolean {
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    if (new URL(request.url).pathname.startsWith("/api/v1/")) return proxyApi(request);
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);

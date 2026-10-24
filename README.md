@@ -11,7 +11,7 @@ A proposta é ajudar o gestor a responder duas perguntas:
 
 O projeto está na fase de **MVP de frontend**, com dados fictícios, simulações baseadas em regras e armazenamento local. A empresa utilizada na demonstração é a **Bella Studio**, uma operação de beleza e estética com agenda, estoque, equipe e fluxo de caixa.
 
-> As análises e os coeficientes são demonstrativos. Não há conexão com dados reais, autenticação de usuários ou modelos preditivos validados nesta versão.
+> Login e permissões por empresa estão implementados. O Dashboard usa a API e análises calculadas a partir dos dados diários informados. Simulações continuam demonstrativas; a estimativa de receita é uma extrapolação histórica simples, não um modelo preditivo validado. Consulte [publicação e primeiro acesso](docs/AUTENTICACAO_E_DADOS_DIARIOS.md).
 
 ## Funcionalidades
 
@@ -114,7 +114,7 @@ Abra o endereço exibido no terminal. A apresentação do produto está em `/apr
 | `/assistente` | Assistente Nexora |
 | `/configuracoes` | Perfil e preferências |
 
-O acesso direto às rotas é intencional nesta versão. A página de login demonstra a experiência de entrada, sem criar contas ou autenticar usuários.
+As rotas operacionais exigem sessão autenticada, e a API verifica permissões e vínculo com a empresa. O primeiro acesso é provisionado pelo administrador; não há cadastro público.
 
 ## Estrutura do projeto
 

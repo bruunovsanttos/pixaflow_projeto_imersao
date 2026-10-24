@@ -16,7 +16,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base
 from app.database.session import get_db
-from app.main import create_app
+from business_harness import create_app
 from app.models.analysis import AnalysisRun
 from app.models.identity import Company
 from app.models.timeline import TimelineEvent, TimelineEventRecommendation

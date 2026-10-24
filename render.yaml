@@ -12,7 +12,9 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: NEXORA_CORS_ORIGINS
-        sync: false
+        value: '["https://pixaflow-projeto-imersao.onrender.com"]'
+      - key: NEXORA_COOKIE_SECURE
+        value: "true"
       - key: NEXORA_APP_NAME
         value: Nexora API
 
@@ -24,5 +26,5 @@ services:
     startCommand: npm start
     healthCheckPath: /
     envVars:
-      - key: VITE_API_URL
-        sync: false
+      - key: NEXORA_API_ORIGIN
+        value: https://nexora-api-hd5c.onrender.com

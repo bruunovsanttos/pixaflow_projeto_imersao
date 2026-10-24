@@ -17,7 +17,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base
 from app.database.session import get_db
-from app.main import create_app
+from business_harness import create_app
 from app.models.analysis import AnalysisRun
 from app.models.enums import BenefitType, EffortLevel, SimulationVariant, DecisionKind
 from app.models.identity import Company, User, CompanyMembership
@@ -162,7 +162,7 @@ class SavedScenarioTests(unittest.TestCase):
         shared=self.save(first['id'],second_member)
         self.assertEqual(self.client.get(self.saved_url(),params={'membership_id':str(second_member)}).json(),[shared])
         all_items=self.client.get(self.saved_url()).json()
-        self.assertEqual(len(all_items),3)
+        self.assertEqual(len(all_items),2)
         self.assertEqual(self.client.get(self.saved_url(),params={'offset':1,'limit':1}).json(),all_items[1:2])
         self.assertEqual(self.client.get(self.saved_url(),params={'offset':10}).json(),[])
         filtered=self.client.get(self.saved_url(),params={'membership_id':str(self.own['member'])}).json()

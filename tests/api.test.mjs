@@ -118,7 +118,7 @@ test("all read functions use scoped endpoints and adapters; every filter survive
   let body;
   let last;
   t.mock.method(globalThis, "fetch", async (url, init) => {
-    last = { url: new URL(url), init };
+    last = { url: new URL(url, "https://nexora.example"), init };
     return Response.json(body);
   });
   const cases = [
@@ -218,6 +218,7 @@ test("all read functions use scoped endpoints and adapters; every filter survive
     assert.equal(last.url.pathname, "/api/v1" + path);
     assert.deepEqual(Object.fromEntries(last.url.searchParams), query);
     assert.equal(last.init.method, "GET");
+    assert.equal(last.init.credentials, "same-origin");
   }
   body = [];
   await risks.getRisks("company", { severity: undefined });
@@ -227,7 +228,7 @@ test("all read functions use scoped endpoints and adapters; every filter survive
   assert.equal(last.url.pathname, "/api/v1/companies/a%2Fb");
 });
 
-test("HTTP, validation, malformed JSON, network and missing configuration errors are consistent", async (t) => {
+test("HTTP, validation, malformed JSON, network errors are consistent", async (t) => {
   let response;
   t.mock.method(globalThis, "fetch", async () => {
     if (response instanceof Error) throw response;
@@ -254,9 +255,6 @@ test("HTTP, validation, malformed JSON, network and missing configuration errors
         error instanceof client.ApiError && error.status === status && message.test(error.message),
     );
   }
-  const missing = await import(compile("client", {}, {}));
-  await assert.rejects(
-    missing.get("/companies"),
-    (error) => error instanceof missing.ApiError && error.status === 0,
-  );
+  response = Response.json([]);
+  assert.deepEqual(await client.get("/companies"), []);
 });

@@ -14,6 +14,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    cookie_secure: bool = True
+
     app_name: str = "Nexora API"
     cors_origins: list[str] = ["http://localhost:5173", "http://localhost:8080"]
 

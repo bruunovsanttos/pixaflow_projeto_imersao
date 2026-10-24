@@ -1,4 +1,5 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from app.core.security import authorize
 
 from app.routes.health import router as health_router
 from app.routes.companies import router as companies_router
@@ -16,8 +17,8 @@ from app.routes.simulations import router as simulations_router
 
 from app.routes.saved_scenarios import router as saved_scenarios_router
 
-api_router = APIRouter()
-api_router.include_router(health_router)
+api_router = APIRouter(dependencies=[Depends(authorize)])
+
 api_router.include_router(companies_router)
 api_router.include_router(users_router)
 api_router.include_router(memberships_router)
@@ -27,3 +28,6 @@ api_router.include_router(opportunities_router)
 api_router.include_router(timeline_events_router)
 api_router.include_router(simulations_router)
 api_router.include_router(saved_scenarios_router)
+
+from app.routes.analytics import router as analytics_router
+api_router.include_router(analytics_router)

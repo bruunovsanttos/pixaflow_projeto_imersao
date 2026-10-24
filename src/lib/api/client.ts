@@ -33,8 +33,7 @@ function errorMessage(body: unknown, fallback: string): string {
 }
 
 async function request<T>(path: string, params: QueryParams, init: RequestInit): Promise<T> {
-  const baseUrl = import.meta.env.VITE_API_URL?.trim();
-  if (!baseUrl) throw new ApiError(0, "VITE_API_URL não está configurada.");
+  const baseUrl = "/api/v1";
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null) query.set(key, String(value));
@@ -45,11 +44,14 @@ async function request<T>(path: string, params: QueryParams, init: RequestInit):
   try {
     response = await fetch(url, {
       ...init,
+      credentials: "same-origin",
       headers: { Accept: "application/json", ...init.headers },
     });
   } catch (cause) {
     throw new ApiError(0, "Não foi possível conectar à API.", { cause });
   }
+  if (response.status === 401 && typeof window !== "undefined" && !path.startsWith("/auth/"))
+    window.dispatchEvent(new Event("nexora-session-expired"));
   if (response.status === 204 && response.ok) return undefined as T;
   let body: unknown;
   try {

@@ -50,7 +50,7 @@ export function answerFromData(
   const eventTopic = summary || /evento|agenda|linha do tempo/.test(q);
   const unsupported = !riskTopic && !opportunityTopic && !eventTopic;
   answer.text = unsupported
-    ? "Não tenho dados suficientes para responder a essa pergunta. Posso consultar riscos, oportunidades e eventos cadastrados. Receita prevista, saúde operacional, eficiência e efeitos de decisões ainda não têm cálculo real disponível."
+    ? "Não tenho dados suficientes para responder a essa pergunta. Posso consultar riscos, oportunidades e eventos cadastrados. Consulte Dados diários e a Visão Geral para análises de receita estimada, cumprimento no prazo e tempo produtivo. Os efeitos de decisões continuam demonstrativos."
     : "Consulta aos registros da empresa. Valores são os cadastrados, não uma nova previsão ou confirmação de resultados realizados.";
   if (riskTopic) {
     if (!data.risks)

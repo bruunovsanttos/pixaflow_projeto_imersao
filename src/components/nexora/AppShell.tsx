@@ -1,3 +1,4 @@
+import { LogoutButton } from "./AuthGate";
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Bell,
@@ -32,6 +33,7 @@ import { profileInitials } from "@/lib/api/identity";
 import { cn } from "@/lib/utils";
 
 const navItems = [
+  { to: "/dados", label: "Dados diários", icon: Building2 },
   { to: "/", label: "Visão Geral", icon: GaugeCircle },
   { to: "/linha-do-tempo", label: "Linha do Tempo", icon: Compass },
   { to: "/riscos", label: "Riscos", icon: ShieldAlert },
@@ -177,7 +179,7 @@ function NotificationsMenu() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel>Notificações</DropdownMenuLabel>
+        <DropdownMenuLabel>Notificações · Demonstrativo</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {notifications.map((n) => (
           <DropdownMenuItem key={n.title} asChild>
@@ -226,6 +228,7 @@ function UserMenu() {
         <DropdownMenuItem asChild>
           <Link to="/configuracoes">Configurações</Link>
         </DropdownMenuItem>
+        <LogoutButton />
         <DropdownMenuItem asChild>
           <Link to="/apresentacao">Voltar à apresentação</Link>
         </DropdownMenuItem>

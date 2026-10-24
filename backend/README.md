@@ -1,8 +1,12 @@
+> Atualização: autenticação, autorização por empresa e dados diários estão implementados.
+> Consulte [publicação e primeiro acesso](../docs/AUTENTICACAO_E_DADOS_DIARIOS.md).
+> A descrição histórica de endpoints abaixo não significa que as operações de provisionamento sejam públicas.
+
 # Backend Nexora
 
 Base em FastAPI, com Python 3.10 ou superior. Disponibiliza health e o nucleo de identidade
-(empresas, usuarios, vinculos e preferencias). Nao ha autenticacao
-ou integracao com o frontend. A infraestrutura PostgreSQL usa SQLAlchemy e Alembic.
+(empresas, usuarios, vinculos e preferencias), login protegido, dados diarios
+e analises integradas ao frontend. A infraestrutura PostgreSQL usa SQLAlchemy e Alembic.
 
 ## Executar no Windows (PowerShell)
 
@@ -129,8 +133,7 @@ Listagens aceitam `offset >= 0` e `limit` de 1 a 100 (padrao 100).
 Criacoes retornam 201; consultas e PUT retornam 200. Recursos ausentes retornam
 404, conflitos de unicidade/integridade 409 e entradas invalidas 422.
 Email segue a normalizacao do EmailStr; a unicidade segue a comparacao do banco
-(case-sensitive na parte local). Nao ha autenticacao: o pertencimento garante
-consistencia dos vinculos, nao autorizacao do solicitante. Os endpoints de
+(case-sensitive na parte local). Ha autenticacao e verificacao de vinculo e permissoes no servidor. Os endpoints de
 preferencias identificam a empresa pelo membership, sem aceitar outro company_id.
 
 ### Testes isolados
@@ -152,21 +155,18 @@ Esta implementacao nao executa migrations nem cria tabelas no startup.
 
 ## Deploy no Render
 
-O Blueprint `../render.yaml` configura a API e o frontend como servicos web e
-nao cria um banco. Configure `DATABASE_URL` com a URL interna do PostgreSQL
-existente, `NEXORA_CORS_ORIGINS` como JSON contendo a origem HTTPS exata do
-frontend (por exemplo, `["https://nexora-frontend.onrender.com"]`) e
-`VITE_API_URL` com a URL publica da API mais `/api/v1`. O backend inicia com
-`uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+O Blueprint `../render.yaml` declara o frontend e a API, sem criar banco.
+`DATABASE_URL` permanece um segredo configurado no ambiente. O frontend usa
+`NEXORA_API_ORIGIN=https://nexora-api-hd5c.onrender.com`, sem `/api/v1`.
+O navegador acessa a API na mesma origem pelo gateway do frontend.
+A API usa `NEXORA_COOKIE_SECURE=true` e aceita gravacoes originadas do frontend publicado.
 
-Antes do primeiro deploy, confira `python -m alembic current` e `python -m alembic heads` no ambiente ligado ao banco de producao. Se o banco ainda nao
-estiver na revisao indicada, revise o estado e faca o upgrade aprovado com
-`python -m alembic upgrade head` como comando manual de pre-deploy; nao use
-`downgrade` nem rode o seed automaticamente. O seed e opcional apenas para
-uma demonstracao vazia, e tem protecoes para o banco `nexora`; nao e necessario
-para manter dados existentes.
+A migração deve ser aplicada antes de ativar a API protegida: `python -m alembic upgrade head`.
+O startup não executa migrações nem seed. Provisionar o acesso existente com
+`python -m scripts.provision_access --email EMAIL --company-id UUID --role admin`.
+A senha é digitada de forma oculta, sem argumentos ou variáveis no repositório.
 
-Health check: `/api/v1/health`. Ele confirma que o processo responde, nao que
-o banco esta conectado. A API nao possui autenticacao/autorizacao; nao exponha
-dados privados ou permita uso multiempresa em producao antes de implementar
-essas protecoes.
+Serviços criados manualmente não passam a usar o Blueprint apenas pelo push;
+confira seus nomes e configurações no painel. Não crie novos serviços duplicados.
+Siga a sequência completa em `../docs/AUTENTICACAO_E_DADOS_DIARIOS.md`.
+O health check `/api/v1/health` confirma o processo, não a conexão com o banco.

@@ -17,7 +17,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.database import Base
 from app.database.session import get_db
-from app.main import create_app
+from business_harness import create_app
 from app.models.analysis import AnalysisRun
 from app.models.enums import BenefitType, EffortLevel, SimulationVariant, DecisionKind
 from app.models.identity import Company, User, CompanyMembership

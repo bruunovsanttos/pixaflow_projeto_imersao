@@ -4,12 +4,15 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import Settings
 from app.routes.router import api_router
+from app.routes.auth import router as auth_router
+from app.routes.health import router as health_router
 from app.services.errors import IdentityError
 
 
 def create_app() -> FastAPI:
     settings = Settings()
     application = FastAPI(title=settings.app_name, version="0.1.0")
+    application.state.settings = settings
     application.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -22,6 +25,8 @@ def create_app() -> FastAPI:
     async def identity_error_handler(request: Request, exc: IdentityError):
         return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
+    application.include_router(auth_router, prefix="/api/v1")
+    application.include_router(health_router, prefix="/api/v1")
     application.include_router(api_router, prefix="/api/v1")
     return application
 

@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -18,5 +18,5 @@ def create_membership(company_id: UUID, data: MembershipCreate, db: Database):
 
 
 @router.get("/companies/{company_id}/memberships", response_model=list[MembershipResponse])
-def list_memberships(company_id: UUID, db: Database, offset: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=100)):
-    return MembershipService(db).list(company_id, offset, limit)
+def list_memberships(company_id: UUID, request: Request, db: Database, offset: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=100)):
+    return ([request.state.membership] if request.state.membership else [])[offset:offset+limit]

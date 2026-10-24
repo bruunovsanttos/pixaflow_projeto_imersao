@@ -64,7 +64,7 @@ const preferences = {
   sensitivity: "agressiva",
 };
 function responseFor(url) {
-  const pathname = new URL(url).pathname;
+  const pathname = new URL(url, "https://nexora.example").pathname;
   if (pathname === "/api/v1/companies") return [company];
   if (pathname === "/api/v1/companies/" + company.id) return company;
   if (pathname.endsWith("/memberships")) return [membership];
@@ -144,7 +144,7 @@ test("PUT sends only preference fields and preserves false booleans and numeric 
   assert.equal(request.init.headers["Content-Type"], "application/json");
   assert.equal(
     request.url,
-    "http://localhost/api/v1/memberships/" + membership.id + "/preferences",
+    "/api/v1/memberships/" + membership.id + "/preferences",
   );
   assert.deepEqual(JSON.parse(request.init.body), {
     alert_risks: false,

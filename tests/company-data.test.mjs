@@ -53,7 +53,7 @@ const risk = {
 test("loads real company UUID and all pages before exposing API data", async (t) => {
   const calls = [];
   t.mock.method(globalThis, "fetch", async (url) => {
-    const parsed = new URL(url);
+    const parsed = new URL(url, "https://nexora.example");
     calls.push(parsed);
     if (parsed.pathname === "/api/v1/companies") {
       return Response.json(
@@ -79,7 +79,7 @@ test("loads real company UUID and all pages before exposing API data", async (t)
 
 test("empty real lists stay empty; unavailable or failed refresh uses the original mocks", async (t) => {
   t.mock.method(globalThis, "fetch", async (url) =>
-    Response.json(new URL(url).pathname.endsWith("/companies") ? [company] : []),
+    Response.json(new URL(url, "https://nexora.example").pathname.endsWith("/companies") ? [company] : []),
   );
   const result = await helper.loadCompanyData(uuid, getRisks, helper.riskListSchema);
   const fallback = ["original mock"];
@@ -96,7 +96,7 @@ test("empty real lists stay empty; unavailable or failed refresh uses the origin
 test("HTTP errors, malformed adapted records, invalid company UUID and partial failures reject safely", async (t) => {
   let mode = "http";
   t.mock.method(globalThis, "fetch", async (url) => {
-    const parsed = new URL(url);
+    const parsed = new URL(url, "https://nexora.example");
     if (parsed.pathname.endsWith("/companies"))
       return Response.json(mode === "company" ? [{ ...company, slug: "unrelated" }] : [company]);
     if (mode === "malformed") return Response.json([{ ...risk, title: null }]);

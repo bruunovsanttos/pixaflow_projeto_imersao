@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Response, Request
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
@@ -18,9 +18,9 @@ def create_scenario(company_id: UUID, data: SavedScenarioCreate, db: Database):
 
 
 @router.get("", response_model=list[SavedScenarioResponse])
-def list_scenarios(company_id: UUID, db: Database, membership_id: UUID | None = None,
+def list_scenarios(company_id: UUID, request: Request, db: Database, membership_id: UUID | None = None,
                    offset: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=100)):
-    return SavedScenarioService(db).list(company_id, membership_id=membership_id, offset=offset, limit=limit)
+    return SavedScenarioService(db).list(company_id, membership_id=request.state.membership.id, offset=offset, limit=limit)
 
 
 @router.get("/{scenario_id}", response_model=SavedScenarioResponse)

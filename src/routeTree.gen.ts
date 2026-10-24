@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApresentacaoRouteImport } from './routes/apresentacao'
 import { Route as AssistenteRouteImport } from './routes/assistente'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
+import { Route as DadosRouteImport } from './routes/dados'
 import { Route as LinhaDoTempoRouteImport } from './routes/linha-do-tempo'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OportunidadesRouteImport } from './routes/oportunidades'
@@ -37,6 +38,11 @@ const AssistenteRoute = AssistenteRouteImport.update({
 const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DadosRoute = DadosRouteImport.update({
+  id: '/dados',
+  path: '/dados',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LinhaDoTempoRoute = LinhaDoTempoRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/apresentacao': typeof ApresentacaoRoute
   '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/dados': typeof DadosRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
   '/oportunidades': typeof OportunidadesRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/apresentacao': typeof ApresentacaoRoute
   '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/dados': typeof DadosRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
   '/oportunidades': typeof OportunidadesRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/apresentacao': typeof ApresentacaoRoute
   '/assistente': typeof AssistenteRoute
   '/configuracoes': typeof ConfiguracoesRoute
+  '/dados': typeof DadosRoute
   '/linha-do-tempo': typeof LinhaDoTempoRoute
   '/login': typeof LoginRoute
   '/oportunidades': typeof OportunidadesRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/apresentacao'
     | '/assistente'
     | '/configuracoes'
+    | '/dados'
     | '/linha-do-tempo'
     | '/login'
     | '/oportunidades'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/apresentacao'
     | '/assistente'
     | '/configuracoes'
+    | '/dados'
     | '/linha-do-tempo'
     | '/login'
     | '/oportunidades'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/apresentacao'
     | '/assistente'
     | '/configuracoes'
+    | '/dados'
     | '/linha-do-tempo'
     | '/login'
     | '/oportunidades'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   ApresentacaoRoute: typeof ApresentacaoRoute
   AssistenteRoute: typeof AssistenteRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
+  DadosRoute: typeof DadosRoute
   LinhaDoTempoRoute: typeof LinhaDoTempoRoute
   LoginRoute: typeof LoginRoute
   OportunidadesRoute: typeof OportunidadesRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/configuracoes'
       preLoaderRoute: typeof ConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dados': {
+      id: '/dados'
+      path: '/dados'
+      fullPath: '/dados'
+      preLoaderRoute: typeof DadosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/linha-do-tempo': {
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApresentacaoRoute: ApresentacaoRoute,
   AssistenteRoute: AssistenteRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
+  DadosRoute: DadosRoute,
   LinhaDoTempoRoute: LinhaDoTempoRoute,
   LoginRoute: LoginRoute,
   OportunidadesRoute: OportunidadesRoute,

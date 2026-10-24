@@ -1,10 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import {
   Area,
   AreaChart,
   CartesianGrid,
-  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -30,7 +29,9 @@ import {
 import { dashboardKpis, upcomingEvents } from "@/lib/dashboard";
 import { DashboardDataStatus } from "@/components/nexora/DashboardDataStatus";
 import { Progress } from "@/components/ui/progress";
-import { healthTrend, kpis, operationalHealth } from "@/lib/mock-data";
+import { useAnalytics } from "@/hooks/use-analytics";
+import { money, type Snapshot } from "@/lib/api/analytics";
+import { kpis } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -51,84 +52,50 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-function HealthCard() {
+function HealthCard({ snapshot }: { snapshot: Snapshot | null | undefined }) {
+  const score = snapshot?.result.health;
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-sidebar p-6 text-sidebar-accent-foreground shadow-[var(--shadow-glow)]">
-      <div className="absolute -right-16 -top-16 size-56 rounded-full bg-[image:var(--gradient-brand)] opacity-25 blur-2xl" />
-      <div className="relative">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/60">
-          {operationalHealth.label} · Demonstrativo
-        </p>
-        <div className="mt-2 flex items-end gap-2">
-          <span className="font-display text-5xl font-semibold leading-none">
-            {operationalHealth.score}
-          </span>
-          <span className="pb-1 text-sm text-sidebar-foreground/60">/ 100</span>
-        </div>
-        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-success/20 px-2.5 py-1 text-xs font-semibold text-success">
-          <ArrowUpRight className="size-3.5" />+{operationalHealth.delta} pontos em relação à última
-          semana
-        </p>
-        <Progress
-          value={operationalHealth.score}
-          className="mt-5 h-2 bg-sidebar-accent [&>div]:bg-[image:var(--gradient-brand)]"
-        />
-        <p className="mt-4 text-sm leading-relaxed text-sidebar-foreground/70">
-          Exemplo demonstrativo: queda para 71 pontos em 7 dias. Sem cálculo pela API.
-        </p>
-      </div>
+    <div className="relative rounded-2xl border bg-sidebar p-6 text-sidebar-accent-foreground shadow-[var(--shadow-glow)]">
+      <p className="text-xs uppercase tracking-widest">Saúde operacional · Cumprimento no prazo</p>
+      <p className="mt-4 text-5xl font-semibold">
+        {score ?? "—"} <span className="text-sm">/ 100</span>
+      </p>
+      <Progress value={score ?? 0} className="mt-5" />
+      <p className="mt-4 text-sm">
+        Tarefas concluídas no prazo ÷ tarefas previstas.{" "}
+        {score == null
+          ? "Sem tarefas previstas registradas na análise."
+          : `${snapshot?.result.coverage_days}/28 dias registrados.`}
+      </p>
+      <p className="mt-3 text-xs">
+        Este indicador mede cumprimento de tarefas; não é uma avaliação geral da empresa.
+      </p>
     </div>
   );
 }
-
-function TrendChart() {
+function TrendChart({ snapshot }: { snapshot: Snapshot | null | undefined }) {
+  if (!snapshot?.result.trend.some((p) => p.score !== null))
+    return (
+      <p className="py-12 text-sm text-muted-foreground">
+        Registre tarefas e gere uma análise para visualizar o histórico.
+      </p>
+    );
   return (
     <div className="h-[260px] w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={healthTrend} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
-          <defs>
-            <linearGradient id="healthFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--color-primary)" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="var(--color-primary)" stopOpacity={0.02} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid strokeDasharray="4 6" stroke="var(--color-border)" vertical={false} />
-          <XAxis
-            dataKey="day"
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
-          />
-          <YAxis
-            domain={[60, 95]}
-            tickLine={false}
-            axisLine={false}
-            tick={{ fontSize: 12, fill: "var(--color-muted-foreground)" }}
-          />
-          <Tooltip
-            contentStyle={{
-              borderRadius: 12,
-              border: "1px solid var(--color-border)",
-              background: "var(--color-card)",
-              fontSize: 12,
-            }}
-          />
+        <AreaChart data={snapshot.result.trend} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="4 6" vertical={false} />
+          <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+          <YAxis domain={[0, 100]} />
+          <Tooltip />
           <Area
-            type="monotone"
+            type="linear"
             dataKey="score"
-            name="Previsão"
+            name="Cumprimento no prazo (%)"
             stroke="var(--color-primary)"
-            strokeWidth={2.5}
-            fill="url(#healthFill)"
-          />
-          <Line
-            type="monotone"
-            dataKey="baseline"
-            name="Média histórica"
-            stroke="var(--color-muted-foreground)"
-            strokeDasharray="5 5"
-            strokeWidth={1.5}
-            dot={false}
+            fill="var(--color-primary)"
+            fillOpacity={0.15}
+            connectNulls={false}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -138,6 +105,8 @@ function TrendChart() {
 
 function Dashboard() {
   const identity = useIdentity();
+  const analytics = useAnalytics();
+  const snapshot = analytics.isError ? undefined : analytics.data;
   const riskResource = useCompanyData("risks", getRisks, riskListSchema, []);
   const opportunityResource = useCompanyData(
     "opportunities",
@@ -149,7 +118,29 @@ function Dashboard() {
   const risks = riskResource.source === "api" ? riskResource.data : undefined;
   const opportunities = opportunityResource.source === "api" ? opportunityResource.data : undefined;
   const criticalRisks = risks?.filter((r) => r.severity === "critico").slice(0, 3) ?? [];
-  const cards = dashboardKpis(kpis, risks, opportunities);
+  const cards = dashboardKpis(kpis, risks, opportunities).map((card) => {
+    if (card.id === "revenue")
+      return {
+        ...card,
+        label: "Receita estimada · Próximos 30 dias",
+        value:
+          snapshot?.result.revenue_forecast != null ? money(snapshot.result.revenue_forecast) : "—",
+        trend: "flat" as const,
+        hint:
+          snapshot?.result.revenue_forecast != null
+            ? `Média histórica × 30 · ${snapshot.result.forecast_start} a ${snapshot.result.forecast_end}`
+            : "Requer 28 dias completos e uma análise salva.",
+      };
+    if (card.id === "efficiency")
+      return {
+        ...card,
+        label: "Eficiência · Tempo produtivo",
+        value: snapshot?.result.efficiency != null ? `${snapshot.result.efficiency}%` : "—",
+        trend: "flat" as const,
+        hint: "Minutos produtivos ÷ minutos disponíveis registrados.",
+      };
+    return card;
+  });
   const events = upcomingEvents(timelineResource.source === "api" ? timelineResource.data : []);
 
   return (
@@ -179,11 +170,36 @@ function Dashboard() {
           <DashboardDataStatus label="Identidade" resource={identity} />
         )}
         <p className="mb-4 text-xs text-muted-foreground">
-          Saúde, tendência, receita prevista e eficiência são demonstrativas: ainda não possuem
-          fonte na API. Os demais dados são consultados por empresa, sem filtro de período.
+          Indicadores calculados a partir do cadastro manual. Riscos e oportunidades contam todos os
+          registros da empresa, sem filtro de período.
+          {snapshot &&
+            ` Análise de ${snapshot.reference_date}: ${snapshot.result.coverage_days}/28 dias registrados. Receita estimada não considera sazonalidade.`}
         </p>
+        <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+          {analytics.isPending && <p role="status">Carregando análise…</p>}
+          {analytics.isError && (
+            <>
+              <p role="alert">Análise indisponível: {analytics.error.message}</p>
+              <Button variant="outline" onClick={() => void analytics.refetch()}>
+                Tentar novamente
+              </Button>
+            </>
+          )}
+          {snapshot === null && (
+            <p>Nenhuma análise salva. Cadastre os dados diários para começar.</p>
+          )}
+          {snapshot?.stale && (
+            <p role="alert" className="text-warning">
+              Os dados mudaram desde esta análise. Os valores abaixo são históricos; gere uma nova
+              análise.
+            </p>
+          )}
+          <Button variant="outline" asChild>
+            <Link to="/dados">Dados diários e análises</Link>
+          </Button>
+        </div>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,320px)_1fr]">
-          <HealthCard />
+          <HealthCard snapshot={snapshot} />
           <div className="grid gap-4 sm:grid-cols-2">
             {cards.map((kpi) => (
               <StatCard key={kpi.id} kpi={kpi} />
@@ -194,9 +210,9 @@ function Dashboard() {
         <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_minmax(0,320px)]">
           <Panel
             title="Tendência da saúde operacional"
-            description="Demonstrativo · Projeção e média histórica ilustrativas, sem fonte na API."
+            description="Histórico diário do cumprimento de tarefas no prazo. Dias ausentes não são considerados zero."
           >
-            <TrendChart />
+            <TrendChart snapshot={snapshot} />
           </Panel>
 
           <Panel
