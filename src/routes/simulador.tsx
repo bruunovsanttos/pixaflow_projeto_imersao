@@ -32,6 +32,7 @@ import {
 } from "@/lib/mock-data";
 
 import { useIdentity } from "@/hooks/use-identity";
+import { useSession } from "@/hooks/use-session";
 import { useCompanyData } from "@/hooks/use-company-data";
 
 import { getOpportunities } from "@/lib/api/opportunities";
@@ -79,6 +80,7 @@ function SimulatorPage() {
   const { q } = Route.useSearch();
 
   const identity = useIdentity();
+  const session = useSession();
 
   const companyId =
     identity.identity?.company.id;
@@ -87,7 +89,10 @@ function SimulatorPage() {
     identity.identity?.membership.id;
 
   const role =
-    identity.identity?.membership.role;
+    session.data?.memberships.find(
+      (membership) =>
+        membership.company_id === companyId
+    )?.role;
 
   const canWrite =
     role === "admin" ||
@@ -568,10 +573,8 @@ function SimulatorPage() {
               opportunities.length ===
                 0 && (
                 <p>
-                  Nenhuma
-                  oportunidade
-                  disponível para
-                  simular.
+                  Nenhuma oportunidade
+                  disponível para simular.
                 </p>
               )}
 
@@ -737,8 +740,7 @@ function SimulatorPage() {
             className="p-5 text-sm"
           >
             Calculando os
-            impactos da
-            decisão...
+            impactos da decisão...
           </p>
         )}
 
@@ -776,12 +778,10 @@ function SimulatorPage() {
               identity.source ===
                 "api" && (
                 <p className="text-sm text-muted-foreground">
-                  Seu perfil
-                  permite simular
-                  e consultar
-                  cenários, mas
-                  não permite
-                  salvar
+                  Seu perfil permite
+                  simular e consultar
+                  cenários, mas não
+                  permite salvar
                   alterações.
                 </p>
               )}
@@ -828,8 +828,7 @@ function SimulatorPage() {
           {companyId &&
             history.isPending && (
               <p role="status">
-                Carregando
-                histórico…
+                Carregando histórico…
               </p>
             )}
 
@@ -839,9 +838,8 @@ function SimulatorPage() {
 
               <p>
                 Não foi possível
-                carregar o
-                histórico da
-                empresa.
+                carregar o histórico
+                da empresa.
               </p>
 
 
@@ -880,9 +878,8 @@ function SimulatorPage() {
           !saved.length ? (
 
             <p className="text-sm text-muted-foreground">
-              Nenhum cenário
-              salvo. Simule uma
-              decisão para
+              Nenhum cenário salvo.
+              Simule uma decisão para
               começar.
             </p>
 
@@ -1096,13 +1093,11 @@ function SimulatorPage() {
                     role="alert"
                     className="mt-4 text-sm text-warning"
                   >
-                    Escolha
-                    cenários com o
-                    mesmo
+                    Escolha cenários
+                    com o mesmo
                     horizonte. Os
                     períodos
-                    selecionados
-                    são
+                    selecionados são
                     diferentes.
                   </p>
                 );
