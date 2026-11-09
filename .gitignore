@@ -35,3 +35,6 @@ playwright-report/
 test-results/
 playwright/.auth/
 playwright/.auth/
+
+# Scripts temporarios locais
+backend/reset_nexora_password.py
