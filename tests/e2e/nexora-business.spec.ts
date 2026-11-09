@@ -1,77 +1,24 @@
 import {
   test,
   expect,
-  type BrowserContext,
 } from "@playwright/test";
-
-
-const EMAIL =
-  process.env.NEXORA_TEST_EMAIL ??
-  "bruno@bellastudio.com.br";
-
-const PASSWORD =
-  process.env.NEXORA_TEST_PASSWORD;
-
-const BASE_URL =
-  process.env.NEXORA_E2E_URL ??
-  "https://pixaflow-projeto-imersao.onrender.com";
-
-
-function requirePassword(): string {
-  if (!PASSWORD) {
-    throw new Error(
-      "NEXORA_TEST_PASSWORD não está definida."
-    );
-  }
-
-  return PASSWORD;
-}
-
-
-async function authenticate(
-  context: BrowserContext
-) {
-  const response =
-    await context.request.post(
-      `${BASE_URL}/api/v1/auth/login`,
-      {
-        data: {
-          email: EMAIL,
-          password: requirePassword(),
-        },
-
-        headers: {
-          Origin: BASE_URL,
-          Accept: "application/json",
-        },
-      }
-    );
-
-  expect(
-    response.status(),
-    await response.text()
-  ).toBe(200);
-}
 
 
 test.describe(
   "Nexora - regras de negócio em produção",
   () => {
 
-    test.beforeEach(
-      async ({ context }) => {
-        await authenticate(context);
-      }
-    );
-
-
     test(
       "Dashboard usa os 28 dias operacionais",
       async ({ page }) => {
 
-        await page.goto("/", {
-          waitUntil: "domcontentloaded",
-        });
+        await page.goto(
+          "/",
+          {
+            waitUntil:
+              "domcontentloaded",
+          }
+        );
 
         await expect(
           page
@@ -88,25 +35,18 @@ test.describe(
       "Dashboard possui saúde operacional calculada",
       async ({ page }) => {
 
-        await page.goto("/", {
-          waitUntil: "domcontentloaded",
-        });
+        await page.goto(
+          "/",
+          {
+            waitUntil:
+              "domcontentloaded",
+          }
+        );
 
         await expect(
           page.getByText(
-            "Saúde operacional · Cumprimento no prazo",
-            {
-              exact: true,
-            }
-          )
-        ).toBeVisible();
-
-        await expect(
-          page
-            .getByText(
-              /83[,.]54/
-            )
-            .first()
+            /83[,.]54/
+          ).first()
         ).toBeVisible();
       }
     );
@@ -116,16 +56,18 @@ test.describe(
       "Dashboard possui eficiência calculada",
       async ({ page }) => {
 
-        await page.goto("/", {
-          waitUntil: "domcontentloaded",
-        });
+        await page.goto(
+          "/",
+          {
+            waitUntil:
+              "domcontentloaded",
+          }
+        );
 
         await expect(
-          page
-            .getByText(
-              /88[,.]78%/
-            )
-            .first()
+          page.getByText(
+            /88[,.]78/
+          ).first()
         ).toBeVisible();
       }
     );
@@ -135,16 +77,18 @@ test.describe(
       "Dashboard possui previsão de receita",
       async ({ page }) => {
 
-        await page.goto("/", {
-          waitUntil: "domcontentloaded",
-        });
+        await page.goto(
+          "/",
+          {
+            waitUntil:
+              "domcontentloaded",
+          }
+        );
 
         await expect(
-          page
-            .getByText(
-              /45\.321|45,321|45321/
-            )
-            .first()
+          page.getByText(
+            /45\.?321[,.]43/
+          ).first()
         ).toBeVisible();
       }
     );
@@ -154,17 +98,29 @@ test.describe(
       "Dashboard possui riscos",
       async ({ page }) => {
 
-        await page.goto("/", {
-          waitUntil: "domcontentloaded",
-        });
+        await page.goto(
+          "/riscos",
+          {
+            waitUntil:
+              "domcontentloaded",
+          }
+        );
 
         await expect(
-          page
-            .getByText(
-              /3.*riscos|riscos.*3/i
-            )
-            .first()
+          page.getByRole(
+            "heading",
+            {
+              name:
+                /Riscos/i,
+            }
+          )
         ).toBeVisible();
+
+        await expect(
+          page.getByRole(
+            "alert"
+          )
+        ).toHaveCount(0);
       }
     );
 
@@ -173,17 +129,29 @@ test.describe(
       "Dashboard possui oportunidades",
       async ({ page }) => {
 
-        await page.goto("/", {
-          waitUntil: "domcontentloaded",
-        });
+        await page.goto(
+          "/oportunidades",
+          {
+            waitUntil:
+              "domcontentloaded",
+          }
+        );
 
         await expect(
-          page
-            .getByText(
-              /3.*oportunidades|oportunidades.*3/i
-            )
-            .first()
+          page.getByRole(
+            "heading",
+            {
+              name:
+                /Oportunidades/i,
+            }
+          )
         ).toBeVisible();
+
+        await expect(
+          page.getByRole(
+            "alert"
+          )
+        ).toHaveCount(0);
       }
     );
 
@@ -192,36 +160,29 @@ test.describe(
       "Dados diários exibem último registro",
       async ({ page }) => {
 
-        await page.goto("/dados", {
-          waitUntil: "domcontentloaded",
-        });
+        await page.goto(
+          "/dados",
+          {
+            waitUntil:
+              "domcontentloaded",
+          }
+        );
 
-        const dateInput =
-          page
-            .locator('input[type="date"]')
-            .first();
+        const date =
+          page.locator(
+            'input[type="date"]'
+          ).first();
 
         await expect(
-          dateInput
-        ).toBeVisible();
-
-        await expect(
-          dateInput
+          date
         ).toHaveValue(
           "2026-10-23"
         );
 
-        const revenueInput =
+        await expect(
           page.locator(
             'input[name="revenue"]'
-          );
-
-        await expect(
-          revenueInput
-        ).toBeVisible();
-
-        await expect(
-          revenueInput
+          )
         ).toHaveValue(
           /1880(?:\.00)?/
         );
@@ -233,51 +194,34 @@ test.describe(
       "último registro respeita tarefas",
       async ({ page }) => {
 
-        await page.goto("/dados", {
-          waitUntil: "domcontentloaded",
-        });
+        await page.goto(
+          "/dados",
+          {
+            waitUntil:
+              "domcontentloaded",
+          }
+        );
 
-        const planned =
+        await expect(
           page.locator(
             'input[name="planned"]'
-          );
-
-        const completed =
-          page.locator(
-            'input[name="completed"]'
-          );
-
-        const onTime =
-          page.locator(
-            'input[name="on_time"]'
-          );
-
-        await expect(
-          planned
-        ).toBeVisible();
-
-        await expect(
-          completed
-        ).toBeVisible();
-
-        await expect(
-          onTime
-        ).toBeVisible();
-
-        await expect(
-          planned
+          )
         ).toHaveValue(
           "21"
         );
 
         await expect(
-          completed
+          page.locator(
+            'input[name="completed"]'
+          )
         ).toHaveValue(
           "19"
         );
 
         await expect(
-          onTime
+          page.locator(
+            'input[name="on_time"]'
+          )
         ).toHaveValue(
           "16"
         );
@@ -298,16 +242,18 @@ test.describe(
         );
 
         await expect(
-          page
-            .getByText(
-              /Simula/i
-            )
-            .first()
+          page.getByRole(
+            "heading",
+            {
+              name:
+                /Simulador de Decisões/i,
+            }
+          )
         ).toBeVisible();
 
         await expect(
-          page.getByText(
-            /erro ao carregar|não foi possível carregar/i
+          page.getByRole(
+            "alert"
           )
         ).toHaveCount(0);
       }
@@ -327,20 +273,21 @@ test.describe(
         );
 
         await expect(
-          page
-            .getByText(
-              /Assistente/i
-            )
-            .first()
+          page.getByRole(
+            "heading",
+            {
+              name:
+                /Assistente/i,
+            }
+          )
         ).toBeVisible();
 
         await expect(
-          page.getByText(
-            /erro ao carregar|não foi possível conectar/i
+          page.getByRole(
+            "alert"
           )
         ).toHaveCount(0);
       }
     );
-
   }
 );

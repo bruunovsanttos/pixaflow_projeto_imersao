@@ -1,4 +1,10 @@
-import { defineConfig, devices } from "@playwright/test";
+import {
+  defineConfig,
+  devices,
+} from "@playwright/test";
+
+const AUTH_FILE =
+  "playwright/.auth/user.json";
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -11,12 +17,20 @@ export default defineConfig({
 
   retries: 1,
 
+  workers: 1,
+
   reporter: [
     ["list"],
-    ["html", {
-      outputFolder: "playwright-report",
-      open: "never",
-    }],
+
+    [
+      "html",
+      {
+        outputFolder:
+          "playwright-report",
+
+        open: "never",
+      },
+    ],
   ],
 
   use: {
@@ -24,16 +38,41 @@ export default defineConfig({
       process.env.NEXORA_E2E_URL ??
       "https://pixaflow-projeto-imersao.onrender.com",
 
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    trace:
+      "retain-on-failure",
+
+    screenshot:
+      "only-on-failure",
+
+    video:
+      "retain-on-failure",
   },
 
   projects: [
     {
+      name: "setup",
+
+      testMatch:
+        /.*\.setup\.ts/,
+    },
+
+    {
       name: "chromium",
+
+      dependencies: [
+        "setup",
+      ],
+
+      testIgnore:
+        /.*\.setup\.ts/,
+
       use: {
-        ...devices["Desktop Chrome"],
+        ...devices[
+          "Desktop Chrome"
+        ],
+
+        storageState:
+          AUTH_FILE,
       },
     },
   ],

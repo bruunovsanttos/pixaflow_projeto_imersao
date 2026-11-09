@@ -1,59 +1,14 @@
 import {
   test,
   expect,
-  type BrowserContext,
   type Page,
 } from "@playwright/test";
-
-const EMAIL =
-  process.env.NEXORA_TEST_EMAIL ??
-  "bruno@bellastudio.com.br";
-
-const PASSWORD =
-  process.env.NEXORA_TEST_PASSWORD;
-
-const BASE_URL =
-  process.env.NEXORA_E2E_URL ??
-  "https://pixaflow-projeto-imersao.onrender.com";
 
 type Role =
   | "admin"
   | "operator"
   | "viewer";
 
-function requirePassword(): string {
-  if (!PASSWORD) {
-    throw new Error(
-      "NEXORA_TEST_PASSWORD não está definida."
-    );
-  }
-
-  return PASSWORD;
-}
-
-async function authenticate(
-  context: BrowserContext
-) {
-  const response =
-    await context.request.post(
-      `${BASE_URL}/api/v1/auth/login`,
-      {
-        data: {
-          email: EMAIL,
-          password: requirePassword(),
-        },
-        headers: {
-          Origin: BASE_URL,
-          Accept: "application/json",
-        },
-      }
-    );
-
-  expect(
-    response.status(),
-    await response.text()
-  ).toBe(200);
-}
 
 async function mockRole(
   page: Page,
@@ -90,6 +45,7 @@ async function mockRole(
   );
 }
 
+
 async function openDailyData(
   page: Page,
   role: Role
@@ -118,6 +74,7 @@ async function openDailyData(
   ).toBeVisible();
 }
 
+
 async function openSimulator(
   page: Page,
   role: Role
@@ -145,6 +102,7 @@ async function openSimulator(
     )
   ).toBeVisible();
 }
+
 
 async function runSimulation(
   page: Page
@@ -201,283 +159,215 @@ async function runSimulation(
   ).toBeVisible();
 }
 
+
 test.describe(
   "Nexora - permissões no frontend",
   () => {
 
-    let context:
-      BrowserContext;
-
-    test.beforeAll(
-      async ({
-        browser,
-      }) => {
-
-        context =
-          await browser.newContext({
-            baseURL:
-              BASE_URL,
-          });
-
-        await authenticate(
-          context
-        );
-      }
-    );
-
-    test.afterAll(
-      async () => {
-        await context?.close();
-      }
-    );
-
     test(
       "admin pode editar dados diários",
-      async () => {
+      async ({ page }) => {
 
-        const page =
-          await context.newPage();
+        await openDailyData(
+          page,
+          "admin"
+        );
 
-        try {
-          await openDailyData(
-            page,
-            "admin"
-          );
+        await expect(
+          page.getByText(
+            /Seu perfil permite somente consulta/i
+          )
+        ).toHaveCount(0);
 
-          await expect(
-            page.getByText(
-              /Seu perfil permite somente consulta/i
-            )
-          ).toHaveCount(0);
+        await expect(
+          page.locator(
+            'input[name="revenue"]'
+          )
+        ).toBeEnabled();
 
-          await expect(
-            page.locator(
-              'input[name="revenue"]'
-            )
-          ).toBeEnabled();
-
-          await expect(
-            page.getByRole(
-              "button",
-              {
-                name:
-                  /Salvar dia/i,
-              }
-            )
-          ).toBeEnabled();
-
-        } finally {
-          await page.close();
-        }
+        await expect(
+          page.getByRole(
+            "button",
+            {
+              name:
+                /Salvar dia/i,
+            }
+          )
+        ).toBeEnabled();
       }
     );
+
 
     test(
       "operator pode editar dados diários",
-      async () => {
+      async ({ page }) => {
 
-        const page =
-          await context.newPage();
+        await openDailyData(
+          page,
+          "operator"
+        );
 
-        try {
-          await openDailyData(
-            page,
-            "operator"
-          );
+        await expect(
+          page.getByText(
+            /Seu perfil permite somente consulta/i
+          )
+        ).toHaveCount(0);
 
-          await expect(
-            page.getByText(
-              /Seu perfil permite somente consulta/i
-            )
-          ).toHaveCount(0);
+        await expect(
+          page.locator(
+            'input[name="revenue"]'
+          )
+        ).toBeEnabled();
 
-          await expect(
-            page.locator(
-              'input[name="revenue"]'
-            )
-          ).toBeEnabled();
-
-          await expect(
-            page.getByRole(
-              "button",
-              {
-                name:
-                  /Salvar dia/i,
-              }
-            )
-          ).toBeEnabled();
-
-        } finally {
-          await page.close();
-        }
+        await expect(
+          page.getByRole(
+            "button",
+            {
+              name:
+                /Salvar dia/i,
+            }
+          )
+        ).toBeEnabled();
       }
     );
+
 
     test(
       "viewer fica somente em consulta nos dados diários",
-      async () => {
+      async ({ page }) => {
 
-        const page =
-          await context.newPage();
+        await openDailyData(
+          page,
+          "viewer"
+        );
 
-        try {
-          await openDailyData(
-            page,
-            "viewer"
-          );
+        await expect(
+          page.getByText(
+            /Seu perfil permite somente consulta/i
+          )
+        ).toBeVisible();
 
-          await expect(
-            page.getByText(
-              /Seu perfil permite somente consulta/i
-            )
-          ).toBeVisible();
+        await expect(
+          page.locator(
+            'input[name="revenue"]'
+          )
+        ).toBeDisabled();
 
-          await expect(
-            page.locator(
-              'input[name="revenue"]'
-            )
-          ).toBeDisabled();
+        await expect(
+          page.getByRole(
+            "button",
+            {
+              name:
+                /Salvar dia/i,
+            }
+          )
+        ).toBeDisabled();
 
-          await expect(
-            page.getByRole(
-              "button",
-              {
-                name:
-                  /Salvar dia/i,
-              }
-            )
-          ).toBeDisabled();
-
-          await expect(
-            page.getByRole(
-              "button",
-              {
-                name:
-                  /Gerar e salvar análise/i,
-              }
-            )
-          ).toBeDisabled();
-
-        } finally {
-          await page.close();
-        }
+        await expect(
+          page.getByRole(
+            "button",
+            {
+              name:
+                /Gerar e salvar análise/i,
+            }
+          )
+        ).toBeDisabled();
       }
     );
+
 
     test(
       "admin pode salvar cenário",
-      async () => {
+      async ({ page }) => {
 
-        const page =
-          await context.newPage();
+        await openSimulator(
+          page,
+          "admin"
+        );
 
-        try {
-          await openSimulator(
-            page,
-            "admin"
-          );
+        await runSimulation(
+          page
+        );
 
-          await runSimulation(
-            page
-          );
+        await expect(
+          page.getByRole(
+            "button",
+            {
+              name:
+                /Salvar cenário/i,
+            }
+          )
+        ).toBeEnabled();
 
-          await expect(
-            page.getByRole(
-              "button",
-              {
-                name:
-                  /Salvar cenário/i,
-              }
-            )
-          ).toBeEnabled();
-
-          await expect(
-            page.getByText(
-              /não permite salvar alterações/i
-            )
-          ).toHaveCount(0);
-
-        } finally {
-          await page.close();
-        }
+        await expect(
+          page.getByText(
+            /não permite salvar alterações/i
+          )
+        ).toHaveCount(0);
       }
     );
+
 
     test(
       "operator pode salvar cenário",
-      async () => {
+      async ({ page }) => {
 
-        const page =
-          await context.newPage();
+        await openSimulator(
+          page,
+          "operator"
+        );
 
-        try {
-          await openSimulator(
-            page,
-            "operator"
-          );
+        await runSimulation(
+          page
+        );
 
-          await runSimulation(
-            page
-          );
+        await expect(
+          page.getByRole(
+            "button",
+            {
+              name:
+                /Salvar cenário/i,
+            }
+          )
+        ).toBeEnabled();
 
-          await expect(
-            page.getByRole(
-              "button",
-              {
-                name:
-                  /Salvar cenário/i,
-              }
-            )
-          ).toBeEnabled();
-
-          await expect(
-            page.getByText(
-              /não permite salvar alterações/i
-            )
-          ).toHaveCount(0);
-
-        } finally {
-          await page.close();
-        }
+        await expect(
+          page.getByText(
+            /não permite salvar alterações/i
+          )
+        ).toHaveCount(0);
       }
     );
 
+
     test(
       "viewer pode simular mas não salvar cenário",
-      async () => {
+      async ({ page }) => {
 
-        const page =
-          await context.newPage();
+        await openSimulator(
+          page,
+          "viewer"
+        );
 
-        try {
-          await openSimulator(
-            page,
-            "viewer"
-          );
+        await runSimulation(
+          page
+        );
 
-          await runSimulation(
-            page
-          );
+        await expect(
+          page.getByRole(
+            "button",
+            {
+              name:
+                /Salvar cenário/i,
+            }
+          )
+        ).toBeDisabled();
 
-          await expect(
-            page.getByRole(
-              "button",
-              {
-                name:
-                  /Salvar cenário/i,
-              }
-            )
-          ).toBeDisabled();
-
-          await expect(
-            page.getByText(
-              /Seu perfil permite simular e consultar cenários/i
-            )
-          ).toBeVisible();
-
-        } finally {
-          await page.close();
-        }
+        await expect(
+          page.getByText(
+            /Seu perfil permite simular e consultar cenários/i
+          )
+        ).toBeVisible();
       }
     );
   }
